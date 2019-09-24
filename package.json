@@ -1,0 +1,32 @@
+{
+  "name": "study-express",
+  "version": "1.0.0",
+  "description": "study the express framework",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/render2css.js && node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lmj01/study-express.git"
+  },
+  "keywords": [
+    "express",
+    "threejs",
+    "vue"
+  ],
+  "author": "meijie",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lmj01/study-express/issues"
+  },
+  "homepage": "https://github.com/lmj01/study-express#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mysql": "^2.17.1",
+    "node-sass": "^4.12.0",
+    "three": "^0.108.0",
+    "vue": "^2.6.10"
+  }
+}
