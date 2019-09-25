@@ -1,15 +1,17 @@
 let sass = require('node-sass');
 let fs = require('fs');
 
+let root = __dirname + "/../../";
+
 function render(inpath, outpath) {
     sass.render({
         file:inpath,
-        includePaths: ['../static/scss'],
+        includePaths: [root+'static/scss'],
         outputStyle: 
-            'compressed'
+            //'compressed'
             //'compact'
             //'nested'
-            //'expanded'
+            'expanded'
     }, function(err, result) {
         if (err) {
             console.log('file: ', inpath);
@@ -27,7 +29,8 @@ function render(inpath, outpath) {
 }
 
 try {
-    render('static/scss/index.scss', 'static/css/index.css');
+    render('static/scss/index.scss', 'static/css-tmp/index.css');
+    render('static/scss/register.scss', 'static/css-tmp/register.css');
 } catch(err) {
     console.log('node-sass parser css', err);
 }

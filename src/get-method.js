@@ -6,6 +6,7 @@ router.use(function timeLog(req, res, next) {
     next();
 });
 
+
 router.get('/', (req, res)=> {
     let options = {
         root: __dirname + '/../static/',
@@ -15,14 +16,33 @@ router.get('/', (req, res)=> {
             'x-send': true
         }
     };
-    res.sendFile("html/index.html", options, err=>{
-        if (err) {
-            //next(err);
-            console.log('send failure', err);
-        } else {
-            console.log('send success');
+    res.sendFile("html/index.html", options);
+});
+
+
+router.get('/register', (req, res)=> {
+    let options = {
+        root: __dirname + '/../static/',
+        dotfiles: 'deny',
+        headers: {
+            'x-timestamp': Date.now(),
+            'x-send': true
         }
-    })
+    };
+    res.sendFile("html/register.html", options);
+});
+
+
+router.get('/login', (req, res)=> {
+    let options = {
+        root: __dirname + '/../static/',
+        dotfiles: 'deny',
+        headers: {
+            'x-timestamp': Date.now(),
+            'x-send': true
+        }
+    };
+    res.sendFile("html/login.html", options);
 });
 
 module.exports = router;

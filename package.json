@@ -4,7 +4,9 @@
   "description": "study the express framework",
   "main": "index.js",
   "scripts": {
-    "start": "node src/render2css.js && node index.js",
+    "start": "nodemon index.js",
+    "bundle": "node src/util/bundleDeps.js",
+    "sass": "node src/util/sass.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -27,6 +29,11 @@
     "mysql": "^2.17.1",
     "node-sass": "^4.12.0",
     "three": "^0.108.0",
+    "uglify-js": "^3.6.0",
+    "uglifycss": "0.0.29",
     "vue": "^2.6.10"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.2"
   }
 }

@@ -1,17 +1,23 @@
 const express = require("express");
 const app = express();
-const port = 8000;
 let getMethods = require("./src/get-method");
+let config = require("./config/config");
 
 let mysql = require('mysql');
 let connection = mysql.createConnection({
-    host:'localhost',
-    user:'root',
-    password:'123456',
-    database:'my_db'
+    host:config.mysql.host,
+    user:config.mysql.user,
+    password:config.mysql.password,
+    database: config.mysql.database
 });
 
-connection.connect();
+connection.connect((err, result)=>{
+    if (err) {
+        console.log('mysql connect ... ', err);
+    } else {
+        console.log('mysql connect ... ', result);
+    }
+});
 
 connection.query('select 1 + 1 as solution', function(err, rows, fields){
     if (err) {
@@ -38,4 +44,4 @@ let staticOption = {
 app.use(express.static('static', staticOption));
 app.use(getMethods);
 
-app.listen(port, ()=> console.log(`app listening on port ${port}!`));
+app.listen(config.port, ()=> console.log(`app listening on port ${config.port}!`));
