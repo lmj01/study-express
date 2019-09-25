@@ -1,33 +1,8 @@
-const express = require("express");
+const express = require('express');
 const app = express();
-let getMethods = require("./src/get-method");
-let config = require("./config/config");
-
-let mysql = require('mysql');
-let connection = mysql.createConnection({
-    host:config.mysql.host,
-    user:config.mysql.user,
-    password:config.mysql.password,
-    database: config.mysql.database
-});
-
-connection.connect((err, result)=>{
-    if (err) {
-        console.log('mysql connect ... ', err);
-    } else {
-        console.log('mysql connect ... ', result);
-    }
-});
-
-connection.query('select 1 + 1 as solution', function(err, rows, fields){
-    if (err) {
-        console.log('query error: ', err);
-        return;
-    }
-    console.log('the solution is : ', rows[0].solution);
-});
-
-connection.end();
+let pathRegister = require('./src/backend/register');
+let pathLogin = require('./src/backend/login');
+let config = require('./config/config');
 
 let staticOption = {
     dotfiles: 'ignore',
@@ -42,6 +17,22 @@ let staticOption = {
 }
 
 app.use(express.static('static', staticOption));
-app.use(getMethods);
+app.use('/register', pathRegister);
+app.use('/login', pathLogin);
+app.get('/', (req, res)=>{
+    let options = {
+        root: __dirname + '/static/',
+        dotfiles: 'deny',
+        headers: {
+            'x-timestamp': Date.now(),
+            'x-send': true
+        }
+    };
+    res.sendFile("html/index.html", options);
+});
+app.get('*', (req, res)=>{
+    res.end("404!");
+})
+
 
 app.listen(config.port, ()=> console.log(`app listening on port ${config.port}!`));

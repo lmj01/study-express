@@ -2,21 +2,23 @@
 <html>
     <head>
         <title>study express</title>
-        <link rel="stylesheet" href="css/register.css">
-        <script src="js/page/register.js"></script>
+        <link rel="stylesheet" href="css/register.min.css">
+        <script src="js/vue.min.js"></script>
+        <script src="js/register.min.js"></script>
+
     </head>
     <body>
         <h1>注册</h1>
-        <form>
+        <div id="app">
             <div>
                 <label for="name">用户名：</label>
-                <input type="text" name="name" placeholder="请输入用户名" id="user">
+                <input type="text" name="name" placeholder="请输入用户名" id="nickname">
             </div>
             <div>
                 <label for="password">密码：</label>
-                <input type="password" placeholder="请输入密码" id="pwd">                
+                <input type="password" placeholder="请输入密码" id="password">                
             </div>
-            <button type="submit">注册</button>
-        </form>
+            <button type="button" v-on:click="register()">注册</button>
+        </div>
     </body>    
 </html>
