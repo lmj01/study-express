@@ -2,11 +2,13 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const winston = require('winston');
 const expressWinston = require('express-winston');
+//const multer = require('multer');
 
+let config = require('./config/config');
 let pathRegister = require('./src/backend/register');
 let pathUpload = require('./src/backend/upload');
 let pathLogin = require('./src/backend/login');
-let config = require('./config/config');
+
 
 const app = express();
 
@@ -66,7 +68,6 @@ let staticOption = {
 
 app.use(express.static('static', staticOption));
 app.use('/register', pathRegister);
-app.use('/upload', pathUpload);
 app.use('/login', pathLogin);
 app.get('/', (req, res)=>{
     let options = {
@@ -79,9 +80,22 @@ app.get('/', (req, res)=>{
     };
     res.sendFile('html/index.html', options);
 });
-app.get('*', (req, res)=>{
-    res.end('404!');
-})
+// app.get('*', (req, res)=>{
+//     res.end('404!');
+// })
+
+//app.use('/file', pathUpload);
+// let storage = multer.diskStorage({
+//     destination: function(req, file, cb) {
+//         cb(null, './uploadfolder');
+//     },
+//     filename: function(req, file, cb) {
+//         cb(null, file.filename + '-' + Date.now());
+//     }
+// });
+// let upload = multer({ storage: storage });
+
+
 
 app.use(expressWinston.errorLogger({
     transports: [

@@ -2,9 +2,9 @@
   "name": "study-express",
   "version": "1.0.0",
   "description": "study the express framework",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
-    "start": "nodemon index.js && nodemon src/util/bundleDeps.js",
+    "start": "NODE_ENV=development nodemon main.js && nodemon src/util/bundleDeps.js",
     "bundle": "nodemon src/util/bundleDeps.js",
     "sass": "node src/util/sass.js",
     "test": "echo \"Error: no test specified\" && exit 1"

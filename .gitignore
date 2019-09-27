@@ -1,6 +1,8 @@
 *.swp
+*.bak
 *.o
 a.out
+cheese.log
 package-lock.json
 node_modules/
 static/css

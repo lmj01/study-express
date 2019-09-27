@@ -4,9 +4,9 @@ const logger = require('./logger');
 let router = express.Router();
 
 router.use(function timeLog(req, res, next) {
-    if (process.env.NODE_ENV == 'development') {
-        console.log('/register time: ', Date.now());
-    }
+    // if (process.env.NODE_ENV == 'development') {
+    //     console.log('/register time: ', Date.now());
+    // }
     // res.header('Access-Control-Allow-Origin', '*');
     // res.header('Access-Control-Allow-Headers', 'content-type');
     // res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
