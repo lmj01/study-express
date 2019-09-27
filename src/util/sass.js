@@ -31,6 +31,7 @@ function render(inpath, outpath) {
 try {
     render('static/scss/index.scss', 'static/css-tmp/index.css');
     render('static/scss/register.scss', 'static/css-tmp/register.css');
+    render('static/scss/upload.scss', 'static/css-tmp/upload.css');
 } catch(err) {
     console.log('node-sass parser css', err);
 }

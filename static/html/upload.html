@@ -3,17 +3,61 @@
     <head>
         <meta charset="UTF-8">
         <title>upload demo</title>
-        <link rel="stylesheet" href="css/register.min.css">
-        <script src="js/vue.min.js"></script>
+        <link rel="stylesheet" href="css/upload.min.css">
+        <script src="js/http.min.js"></script>
     </head>
     <body>
         <h1>上传文件</h1>
         <div id="app">
-            <form action="file" method="POST" enctype="multipart/form-data">
+            <iframe name="fileIframe" id="fileFrame" src="" width="0" height="0"></iframe>
+            <form action="uploadfile" method="POST" enctype="multipart/form-data"
+                target="fileIframe" id="form1">
                 <h2>单图上传</h2>
                 <input type="file" name="logo">
                 <input type="submit" value="提交">
             </form>
+            <br><br><br>
+            <form action="uploadfiles" method="POST" enctype="multipart/form-data"
+                target="fileIframe" id="form2">
+                <h2>多图上传</h2>
+                <input type="file" name="logos" id="img1">
+                <input type="file" name="logos" id="img2">
+                <input type="submit" value="提交">
+            </form>
+            <br><br><br>
+            <div>
+                <input type="file" name="logo" onchange="selectFile(this)">
+                <button type="button" onclick="submitSignle()">提交</button>
+            </div>
         </div>        
+        <script>
+            let iframe = document.getElementById('fileFrame');
+            iframe.onload = function(e){
+                let text = window.frames[0].document.body.innerText;
+                if (text) {
+                    let res = JSON.parse(text);                 
+                    console.log('on-load ', res);   
+                    if (res.fieldname == 'logo') {
+                        window.document.getElementById('form1').reset();
+                    } else {
+                        window.document.getElementById('form2').reset();
+                    }
+                }                
+            }
+
+            let file = null;
+            function selectFile(e) {
+                console.log(e);
+                file = e.files[0];                
+            }
+            function submitSignle() {
+                let fd = new FormData();
+                fd.append('tip', 'text');
+                fd.append('file', file, file.name);
+                http.post('/upload/formdata', fd, data=>{
+                    console.log('post form data', data);
+                });
+            }
+        </script>
     </body>    
 </html>

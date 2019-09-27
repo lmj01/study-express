@@ -1,6 +1,7 @@
 const express = require('express');
-//const multer = require('multer');
-const logger = require('./logger');
+const multiparty = require('multiparty');
+
+let logger = require('../middleware/logger');
 let router = express.Router();
 
 router.use(function timeLog(req, res, next) {
@@ -9,16 +10,6 @@ router.use(function timeLog(req, res, next) {
     }
     next();
 });
-
-// let storage = multer.diskStorage({
-//     destination: function(req, file, cb) {
-//         cb(null, './uploadfolder');
-//     },
-//     filename: function(req, file, cb) {
-//         cb(null, file.filename + '-' + Date.now());
-//     }
-// });
-// let upload = multer({ storage: storage });
 
 router.get('/', (req, res)=> {
     let options = {
@@ -33,18 +24,32 @@ router.get('/', (req, res)=> {
     res.sendFile("html/upload.html", options);
 });
 
-router.post('/', (req, res)=>{
-    // upload(req, res, function(err) {
-    //     if (err instanceof multer.MulterError) {
-
-    //     } else if (err) {
-            
-    //     }
-    //     logger.error(err);
-    // })
-    let result = {};    
-    logger.info(result);
+router.post('/formdata', (req, res)=>{
+    let form = new multiparty.Form({
+        uploadDir: './static/images'
+    });
+    form.parse(req, function(err, fields, files){
+        logger.info(fields);
+        logger.info(files);
+        if (err) {
+            logger.info(err);
+        } 
+        if (fields) {
+            Object.keys(fields).forEach(function(name){
+                logger.info('field name ' + name);
+            });                
+        }
+        if (files) {
+            Object.keys(files).forEach(function(name){
+                logger.info('file name ' + name);
+            });
+        }
+        //res.setHeader('text/plain');
+        //res.end('file count' + files.length);
+    });
+    logger.info(req.body);
+    let result = {ok:true};
     res.send(result);
-});
+})
 
 module.exports = router;

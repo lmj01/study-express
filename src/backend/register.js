@@ -1,6 +1,6 @@
 let express = require('express');
 let util = require('./util');
-const logger = require('./logger');
+const logger = require('../middleware/logger');
 let router = express.Router();
 
 router.use(function timeLog(req, res, next) {

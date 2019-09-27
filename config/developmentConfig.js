@@ -6,4 +6,6 @@ module.exports = {
         database: 'dbexpress'
     }
     ,port: 8000
+    ,storageFolder: 'uploadfiles/'
+    ,limitSize: 52428800 // 50M limit
 }
