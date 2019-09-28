@@ -14,10 +14,10 @@ let vm = new Vue({
 
             http.post('register', argFD, data=>{
                 console.log('formdata', data);
-            });
+            }, 'urlencode');
             http.post('register', args, data=>{
                 console.log('json', data);
-            })
+            }, 'json');
         }
     }
 });

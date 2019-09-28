@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const winston = require('winston');
 const expressWinston = require('express-winston');
 const multer = require('multer');
+const cookieParser = require('cookie-parser');
 
 let config = require('./config/config');
 let pathRegister = require('./src/backend/register');
@@ -50,6 +51,7 @@ app.use(bodyParser.text({
     type: 'text/html' 
     ,limit: config.limitSize
 }));
+//app.use(cookieParser);
 
 let staticOption = {
     dotfiles: 'ignore',

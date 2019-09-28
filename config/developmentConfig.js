@@ -7,5 +7,6 @@ module.exports = {
     }
     ,port: 8000
     ,storageFolder: 'uploadfiles/'
+    ,imgagesFolder: './static/images'
     ,limitSize: 52428800 // 50M limit
 }

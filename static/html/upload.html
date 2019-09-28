@@ -25,9 +25,15 @@
                 <input type="submit" value="提交">
             </form>
             <br><br><br>
+            <form action="" id="form3">
+                <input type="text" name="plain" id="txt1">
+                <input type="file" name="image" id="img1">
+            </form>
+            <button type="button" onclick="submitSignle()">提交</button>
+            <br><br><br>
             <div>
                 <input type="file" name="logo" onchange="selectFile(this)">
-                <button type="button" onclick="submitSignle()">提交</button>
+                <button type="button" onclick="submitBlob()">提交buffer</button>
             </div>
         </div>        
         <script>
@@ -51,12 +57,55 @@
                 file = e.files[0];                
             }
             function submitSignle() {
-                let fd = new FormData();
-                fd.append('tip', 'text');
-                fd.append('file', file, file.name);
+                let fd = new FormData(
+                    document.forms[2]
+                    );
+                fd.append('tip', 'text');  
+                let val = {hello:'world'};
+                let blob = new Blob([JSON.stringify(val, null, 2)], {type:'application/json'});
+                fd.append('bts', blob, 'test.json');
+                let buffer = new ArrayBuffer(16);
+                let int32View = new Int32Array(buffer);
+                for (let i=0;i<int32View.length;++i) {
+                    int32View[i] = i * 2;
+                }
+                blob = new Blob([buffer], {type:
+                    //'application/octet-stream'
+                    'text/html'
+                });
+                fd.append('ssbufer', blob, 'buffer.txt');
                 http.post('/upload/formdata', fd, data=>{
                     console.log('post form data', data);
-                });
+                },'formdata');
+            }
+            function submitBlob() {
+                if (file) {
+                    let reader = new FileReader();
+                    reader.onload = function(e) {
+                        let blob = e.target.result;
+                        console.log(blob);
+                        postBlob(new Blob([blob]));
+                    }
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    postBlob();
+                }
+            }
+            function postBlob(inData) {
+                let blob = null;
+                if (inData) {
+                    blob = inData;
+                    http.post('/upload/blob/buffer', blob, rdata=>{
+                        console.log('post blob data',rdata);
+                    },'buffer');
+                } else {                    
+                    let val = {hello:'world'};
+                    blob = new Blob([JSON.stringify(val, null, 2)], {type:'application/json'});
+                    http.post('/upload/blob/json', blob, rdata=>{
+                        console.log('post blob data',rdata);
+                    },'blob');
+                }                
+                
             }
         </script>
     </body>    

@@ -8,3 +8,5 @@ node_modules/
 static/css
 static/css-tmp
 static/js
+static/images
+uploadfiles

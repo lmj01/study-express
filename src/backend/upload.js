@@ -2,11 +2,12 @@ const express = require('express');
 const multiparty = require('multiparty');
 
 let logger = require('../middleware/logger');
+let config = require('../../config/config');
 let router = express.Router();
 
 router.use(function timeLog(req, res, next) {
     if (process.env.NODE_ENV == 'development') {
-        console.log('/upload time: ', Date.now());
+        console.log('/upload time: ', new Date());
     }
     next();
 });
@@ -24,32 +25,52 @@ router.get('/', (req, res)=> {
     res.sendFile("html/upload.html", options);
 });
 
-router.post('/formdata', (req, res)=>{
+router.post('/formdata', (req, res)=>{    
+    logger.info(req.get('Content-Type'));
     let form = new multiparty.Form({
-        uploadDir: './static/images'
+        uploadDir: config.imgagesFolder
     });
     form.parse(req, function(err, fields, files){
-        logger.info(fields);
-        logger.info(files);
         if (err) {
-            logger.info(err);
+            logger.error(err);
+            res.end({ok:false});
+            return;
         } 
         if (fields) {
             Object.keys(fields).forEach(function(name){
                 logger.info('field name ' + name);
+                logger.info(fields[name]);
             });                
         }
         if (files) {
             Object.keys(files).forEach(function(name){
                 logger.info('file name ' + name);
+                logger.info(files[name]);
             });
         }
-        //res.setHeader('text/plain');
-        //res.end('file count' + files.length);
     });
+    res.send({ok:true});
+});
+
+router.post('/blob/json', (req, res)=>{
+    logger.info('blob json data');
+    logger.info(req.get('Content-Type'));
+    logger.info(req.body);
+    for (let k in req.body) {
+        let val = k + req.body[k];
+        let json = JSON.parse(val);
+        logger.info(json);    
+    }    
+    let result = {ok:true};
+    res.send(result);
+});
+
+router.post('/blob/buffer', (req, res)=>{
+    logger.info('blob buffer data');
+    logger.info(req.get('Content-Type'));
     logger.info(req.body);
     let result = {ok:true};
     res.send(result);
-})
+});
 
 module.exports = router;
