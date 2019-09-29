@@ -1,4 +1,6 @@
 let express = require('express');
+let util = require('./util');
+
 let router = express.Router();
 
 router.use(function timeLog(req, res, next) {
@@ -7,15 +9,7 @@ router.use(function timeLog(req, res, next) {
 });
 
 router.get('/', (req, res)=> {
-    let options = {
-        root: __dirname + '/../../static/html',
-        dotfiles: 'deny',
-        headers: {
-            'x-timestamp': Date.now(),
-            'x-send': true
-        }
-    };
-    res.sendFile("login.html", options);
+    util.sendFile(res, '../../static/html', 'login.html');
 });
 
 router.post('/', (req, res)=>{

@@ -4,16 +4,26 @@ const winston = require('winston');
 const expressWinston = require('express-winston');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
+const expressSession = require('express-session');
 
 let config = require('./config/config');
 let pathRegister = require('./src/backend/register');
 let pathUpload = require('./src/backend/upload');
 let pathLogin = require('./src/backend/login');
+let util = require('./src/backend/util');
 
 let storage = require('./src/middleware/storage');
 let logger = require('./src/middleware/logger');
+let mysql = require('./src/middleware/mysql');
+
+let statistics = require('./src/model/statistics');
+
+let entryBlog = require('./src/entry/blog');
+let entryAdmin = require('./src/entry/admin');
 
 const app = express();
+
+mysql.begin(config.mysql, 2);
 
 app.use(expressWinston.logger({
     transports: [
@@ -51,7 +61,15 @@ app.use(bodyParser.text({
     type: 'text/html' 
     ,limit: config.limitSize
 }));
-//app.use(cookieParser);
+app.use(cookieParser());
+app.use(expressSession({
+    secret: 'recommand 128 byte randome string',
+    resave: false,
+    saveUninitialized: true,
+    cookie:{
+        maxAge: 1 * 60 * 60 * 1000 // 默认1小时
+    }
+}));
 
 let staticOption = {
     dotfiles: 'ignore',
@@ -69,6 +87,7 @@ let uploadFile = multer({
     //dest: 'upload-single/'
     storage: storage
 });
+
 // 单文件上传
 app.post('/uploadfile', uploadFile.single('logo'), (req, res, next)=>{
     let file = req.file;
@@ -99,41 +118,18 @@ app.post('/uploadfiles', uploadFile.array('logos',2), (req, res, next)=>{
     res.send(JSON.stringify(finfos));
 });
 
-// app.get('*', (req, res, next)=>{
-//     let originList = [
-//         'http://127.0.0.1'
-//     ]
-//     // if (originList.includes(req.headers.origin.toLowerCase())) {
-//     //     res.header("Access-Control-Allow-Origin", req.headers.origin);
-//     // }
-//     res.header('Access-Control-Allow-Origin', '*');
-//     res.header('Access-Control-Allow-Headers', 'content-type');
-//     res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-//     if (req.method.toLowerCase() == 'options') {
-//         res.send(200);
-//     } else {
-//         next();    
-//     }
-// })
-
 app.use(express.static('static', staticOption));
+app.use('/blog', entryBlog);
+app.use('/admin', entryAdmin);
+
 app.use('/register', pathRegister);
 app.use('/upload', pathUpload);
 app.use('/login', pathLogin);
 app.get('/', (req, res)=>{
-    let options = {
-        root: __dirname + '/static/',
-        dotfiles: 'deny',
-        headers: {
-            'x-timestamp': Date.now(),
-            'x-send': true
-        }
-    };
-    res.sendFile('html/index.html', options);
+    statistics.parseSession(req.session);
+    statistics.parseCookie(req.cookies);
+    util.sendFile(res, '../../static/html', 'index.html');
 });
-// app.get('*', (req, res)=>{
-//     res.end('404!');
-// })
 
 app.use(expressWinston.errorLogger({
     transports: [

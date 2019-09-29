@@ -28,7 +28,7 @@ router.get('/', (req, res)=> {
 router.post('/formdata', (req, res)=>{    
     logger.info(req.get('Content-Type'));
     let form = new multiparty.Form({
-        uploadDir: config.imgagesFolder
+        uploadDir: config.formUploadDir
     });
     form.parse(req, function(err, fields, files){
         if (err) {

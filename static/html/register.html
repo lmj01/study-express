@@ -2,30 +2,58 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <title>register demo</title>
+        <title>register</title>
         <link rel="stylesheet" href="css/register.min.css">
         <script src="js/vue.min.js"></script>
+        <script src="js/http.min.js"></script>
     </head>
     <body>
-        <h1>注册</h1>
+        <h1>Login Entry</h1>
         <div id="app">
-            <div>
-                <label for="name">用户名：</label>
-                <input type="text" name="name" placeholder="请输入用户名" id="nickname">
-            </div>
-            <div>
-                <label for="name">性别：</label>
-                <select type="text" name="name" id="sex">
-                    <option>男</option>
-                    <option>女</option>
-                </select>
-            </div>
-            <div>
-                <label for="password">密码：</label>
-                <input type="password" placeholder="请输入密码" id="password">                
-            </div>
+            <form form="" id="form1">
+                <div>
+                    <label for="name">用户名：</label>
+                    <input type="text" name="name" placeholder="请输入用户名" id="nickname">
+                </div>
+                <div>
+                    <label for="name">性别：</label>
+                    <select type="text" name="name" id="sex">
+                        <option>男</option>
+                        <option>女</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="password">密码：</label>
+                    <input type="password" placeholder="请输入密码" id="password">                
+                </div>
+            </form>
             <button type="button" v-on:click="register()">注册</button>
         </div>        
-        <script type="module" src="js/register.min.js"></script>
+        <script>
+            let vm = new Vue({
+                el:'#app',
+                methods: {
+                    register: function() {            
+                        let args = {
+                            'nickname': document.getElementById('nickname').value,
+                            'password':document.getElementById('password').value,
+                            'sex':document.getElementById('sex').value
+                        }
+                        let argFD = new FormData();
+                        for (let o in args) {
+                            argFD.append(o, args[o]);
+                        }
+
+                        http.post('register', argFD, data=>{
+                            console.log('formdata', data);
+                        }, 'formdata');
+
+                        // http.post('register', args, data=>{
+                        //     console.log('json', data);
+                        // }, 'json');
+                    }
+                }
+            });
+        </script>
     </body>    
 </html>

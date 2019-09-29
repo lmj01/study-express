@@ -3,10 +3,12 @@ module.exports = {
         host: 'localhost',
         user : 'root',
         password: 'lmjpassword',
-        database: 'dbexpress'
+        database: 'dbexpress',
+        port: 3306,
+        connectionLimit: 10
     }
     ,port: 8000
     ,storageFolder: 'uploadfiles/'
-    ,imgagesFolder: './static/images'
+    ,formUploadDir: './static/images'
     ,limitSize: 52428800 // 50M limit
 }

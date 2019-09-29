@@ -69,11 +69,8 @@
                 for (let i=0;i<int32View.length;++i) {
                     int32View[i] = i * 2;
                 }
-                blob = new Blob([buffer], {type:
-                    //'application/octet-stream'
-                    'text/html'
-                });
-                fd.append('ssbufer', blob, 'buffer.txt');
+                blob = new Blob([buffer], {type: 'application/octet-stream' });
+                fd.append('bufer', blob, 'buffer.bin');
                 http.post('/upload/formdata', fd, data=>{
                     console.log('post form data', data);
                 },'formdata');
