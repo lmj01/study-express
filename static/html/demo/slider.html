@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>slider</title>
+        <link rel="stylesheet" href="/css/register.min.css">
+        <script src="/js/vue.min.js"></script>
+        <style>
+            .content {
+                width: 500px;
+                height: 60px;
+                margin: 0 auto;
+                position: relative;
+                display: flex;
+                flex-direction: row;
+                background-color: lightgreen;
+            }
+            .content > div:first-child,
+            .content > div:last-child {
+                width: 5%;
+                position: relative;
+                box-sizing: content-box;
+            }
+            .content > div:nth-child(2) {
+                width: 90%;
+                overflow: hidden;
+                overflow-x: auto;
+            }
+
+            .item {
+                box-shadow: 0 2px 8px 0 rgba(51, 51, 51, 0.2);
+                border-radius: 4px;
+                position: relative;
+                cursor: pointer;
+                display: inline-block;
+                width: 20%;
+                margin: 3% 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Login Entry</h1>
+        <div id="app">
+            <div class="content">
+                <div v-on:click="updatePos(true)"><i>&lt;&lt;</i></div>
+                <div>
+                    <com-item v-for="item in value" :val="item"></com-item>
+                </div>
+                <div v-on:click="updatePos(false)"><i>&gt;&gt;</i></div>
+            </div>
+        </div>        
+        <script>
+            let vm = new Vue({
+                components: {
+                    "com-item": {
+                        template:
+                        `<div class="item" v-show="val.show">
+                            <img src="/svg/3d.svg">
+                            <span>{{val.v}}</span>
+                        </div>`
+                        ,props: {
+                            val: Object
+                        }
+                    }                    
+                }
+                ,el:'#app',
+                data: {
+                    value: [{v:1},{v:2},{v:3},{v:4},{v:5},{v:6},{v:7},{v:8},{v:9}],
+                    start: 0,
+                    stride: 4
+                },
+                mounted: function(){
+                    this.updatePos();
+                },
+                methods: {
+                    updatePos: function(type) {
+                        let len = this.value.length;
+                        this.value.forEach(e=>e.show=false);
+                        if (type==true && this.start>0) {
+                            this.start -= 1;
+                        } else if (type == false && this.start+this.stride<len) {
+                            this.start += 1;
+                        }
+                        this.value.forEach((e,i)=>{
+                            if (i >=this.start && i<this.start+this.stride) {
+                                e.show = true;
+                            }
+                        });
+                        this.$children.forEach(e=>e.$forceUpdate());
+                    }
+                }
+            });
+        </script>
+    </body>    
+</html>
