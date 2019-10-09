@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>blog-markdown</title>
+        <link rel="stylesheet" href="/css/index.min.css">
+        <script src="/js/showdown.min.js"></script>
+        <script src="/js/http.min.js"></script>
+    </head>
+    <body>
+        <h1>showdown markdown</h1>
+        <div id="content"></div>
+        <script>
+            let converter = new showdown.Converter();
+            let content = document.getElementById('content');
+            console.log('api demo');
+            http.post('/api/md', {}, data=>{
+                content.innerHTML = converter.makeHtml(data);
+            }, 'buffer');
+        </script>        
+        <script src="/js/netspeed.min.js"></script>
+    </body>    
+</html>

@@ -14,6 +14,8 @@ function copyDeps() {
     let root = __dirname + "/../../";
     copy(root+'node_modules/three/build/three.min.js', root+'static/js/three.min.js');
     copy(root+'node_modules/vue/dist/vue.min.js', root+'static/js/vue.min.js');
+    copy(root+"node_modules/showdown/dist/showdown.min.js", root+"static/js/showdown.min.js");
+    copy(root+"node_modules/showdown/dist/showdown.min.js.map", root+"static/js/showdown.min.js.map");
 }
 
 copyDeps();
@@ -44,6 +46,9 @@ let jsOptions = {
 }
 bundlejs(root+'static/js/http.min.js', [
     root+'src/frontend/http.js'
+], jsOptions);
+bundlejs(root+'static/js/netspeed.min.js', [
+    root+'src/frontend/netspeed.js'
 ], jsOptions);
 bundlejs(root+'static/js/register.min.js', [
     root+'src/frontend/http.js',

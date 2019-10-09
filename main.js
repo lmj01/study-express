@@ -20,6 +20,7 @@ let statistics = require('./src/model/statistics');
 
 let entryBlog = require('./src/entry/blog');
 let entryAdmin = require('./src/entry/admin');
+let entryApi = require('./src/entry/api');
 
 const app = express();
 
@@ -121,6 +122,7 @@ app.post('/uploadfiles', uploadFile.array('logos',2), (req, res, next)=>{
 app.use(express.static('static', staticOption));
 app.use('/blog', entryBlog);
 app.use('/admin', entryAdmin);
+app.use('/api', entryApi);
 
 app.use('/register', pathRegister);
 app.use('/upload', pathUpload);
