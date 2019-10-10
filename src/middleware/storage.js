@@ -1,14 +1,8 @@
 const fs = require('fs');
+const createFolder = require('../util/folder');
 const multer = require('multer');
 const config = require('./../../config/config');
 
-let createFolder = (folder)=>{
-    try {
-        fs.accessSync(folder);
-    } catch(e) {
-        fs.mkdirSync(folder);
-    }
-}
 createFolder(config.storageFolder);
 let storage = multer.diskStorage({
     destination: (req, file, cb)=>{

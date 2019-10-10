@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>blog-orm</title>
+        <link rel="stylesheet" href="/css/index.min.css">
+        <script src="/js/http.min.js"></script>
+    </head>
+    <body>
+        <h1>ORM-mysql</h1>
+        <button type="button" onclick="btnClick()">创建MySQL表</div>
+        <script>
+            function btnClick() {
+                http.post('/api/orm', {}, data=>{
+                    console.log(data);
+                }, 'buffer');
+            }
+        </script>        
+    </body>    
+</html>

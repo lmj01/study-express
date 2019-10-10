@@ -1,6 +1,7 @@
 let fs = require('fs');
 let bundlejs = require('./bundle-js');
 let bundlecss = require('./bundle-css');
+const createFolder = require('./folder');
 
 function copy(src, dst) {
     fs.copyFile(src, dst, fs.constants.COPYFILE_EXCL, (err)=>{
@@ -12,10 +13,12 @@ function copy(src, dst) {
 
 function copyDeps() {
     let root = __dirname + "/../../";
+    createFolder(root+'static/js');
     copy(root+'node_modules/three/build/three.min.js', root+'static/js/three.min.js');
     copy(root+'node_modules/vue/dist/vue.min.js', root+'static/js/vue.min.js');
     copy(root+"node_modules/showdown/dist/showdown.min.js", root+"static/js/showdown.min.js");
     copy(root+"node_modules/showdown/dist/showdown.min.js.map", root+"static/js/showdown.min.js.map");
+    copy(root+"node_modules/ua-parser-js/dist/ua-parser.min.js", root+"static/js/us-parser.min.js");
 }
 
 copyDeps();
@@ -27,6 +30,7 @@ let cssOptions = {
     cuteComments: false
 }
 let root = __dirname + "/../../";
+createFolder(root+'static/css');
 bundlecss(root+'static/css/index.min.css', [
     root+'static/css-tmp/index.css'
 ], cssOptions);
@@ -49,6 +53,9 @@ bundlejs(root+'static/js/http.min.js', [
 ], jsOptions);
 bundlejs(root+'static/js/netspeed.min.js', [
     root+'src/frontend/netspeed.js'
+], jsOptions);
+bundlejs(root+'static/js/device.info.min.js', [
+    root+'src/frontend/device.info.js'
 ], jsOptions);
 bundlejs(root+'static/js/register.min.js', [
     root+'src/frontend/http.js',

@@ -1,5 +1,6 @@
 let sass = require('node-sass');
 let fs = require('fs');
+const createFolder = require('./folder');
 
 let root = __dirname + "/../../";
 
@@ -29,6 +30,7 @@ function render(inpath, outpath) {
 }
 
 try {
+    createFolder(root+'static/css-tmp');
     render('static/scss/index.scss', 'static/css-tmp/index.css');
     render('static/scss/register.scss', 'static/css-tmp/register.css');
     render('static/scss/upload.scss', 'static/css-tmp/upload.css');
