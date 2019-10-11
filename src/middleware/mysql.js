@@ -17,15 +17,13 @@ class MySql {
             this.connect = mysql.createConnection(options);
             this.connect.connect((err,res)=>{
                 if (err) {
-                    logger.info('mysql connect ... ', err);
+                    logger.error('mysql connect ... ', err);
                 } else {
-                    logger.info('mysql connect begin----', res);
                     this.type = 1;
                 }
             });
         } else if (type == 2) {
             this.pool = mysql.createPool(options);
-            logger.info('mysql pool begin----');
         }        
         this.type = type;
     }

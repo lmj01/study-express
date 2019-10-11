@@ -2,18 +2,46 @@
 <html>
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
         <title>blog-orm</title>
         <link rel="stylesheet" href="/css/index.min.css">
         <script src="/js/http.min.js"></script>
+        <style>
+            button {
+                margin: 5px;
+            }
+        </style>
     </head>
     <body>
         <h1>ORM-mysql</h1>
-        <button type="button" onclick="btnClick()">创建MySQL表</div>
+        <button type="button" onclick="btnClick(1)">创建tbUser表</div>
+        <button type="button" onclick="btnClick(2)">添加</div>
+        <button type="button" onclick="btnClick(3)">查找</div>
+        <button type="button" onclick="btnClick(4)">更新</div>
+        <button type="button" onclick="btnClick(5)">删除</div>
         <script>
-            function btnClick() {
-                http.post('/api/orm', {}, data=>{
-                    console.log(data);
-                }, 'buffer');
+            function btnClick(type) {
+                if (type == 1) {
+                    http.post('/api/orm', {type:'create'}, data=>{
+                        console.log(data);
+                    }, 'json');
+                } else if (type == 2) {
+                    http.post('/api/orm', {type:'add'}, data=>{
+                        console.log(data);
+                    }, 'json');
+                } else if (type == 3) {
+                    http.post('/api/orm', {type:'find'}, data=>{
+                        console.log(data);
+                    }, 'json');
+                } else if (type == 4) {
+                    http.post('/api/orm', {type:'update'}, data=>{
+                        console.log(data);
+                    }, 'json');                
+                } else if (type == 5) {
+                    http.post('/api/orm', {type:'remove'}, data=>{
+                        console.log(data);
+                    }, 'json');
+                }                
             }
         </script>        
     </body>    
