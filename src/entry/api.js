@@ -5,6 +5,7 @@ let logger = require('../middleware/logger');
 let api = express();
 
 api.post('/md', (req, res)=>{
+    let body = req.body, name = body.name;
     let options = {
         root: __dirname + '/../../markdown/',
         dotfiles: 'deny',
@@ -13,7 +14,7 @@ api.post('/md', (req, res)=>{
             'x-send': true
         }
     };
-    res.sendFile('markdown-syntax.md', options);
+    res.sendFile(name, options);
 });
 
 api.post('/orm', (req, res)=>{ 
