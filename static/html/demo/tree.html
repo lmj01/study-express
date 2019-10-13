@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>Folding lists</title>
+	<style type="text/css">
+		ul { margin: 0 0 -1em -12px; padding:1em 0 0 0; position:relative; border-color:#A2D3FF; }
+		li { 
+			border-left:3px solid #A2D3FF; 
+			padding:0 0 1em 32px; 
+			margin-left:0; 
+			list-style:none; 
+			font-size:13px; 
+			position:relative;
+		}
+		li:first-child { }
+		
+		li::before { content:' '; 
+			display:block; width:23px; height:1.5em; 
+			position:absolute; left:-3px; top:-1em; 
+			border: 3px solid #02D3FF; border-width:0 0 3px 3px;  
+		}
+		li:first-child:before { height:2em; top:-1.5em; }
+		/* FireFox ignores absolute positioning on the generated content */
+		body:not([class*=""]) li:before {  margin-top:-1em; margin-bottom:-.6em ;margin-left:-35px; }
+		body:not([class*=""]) li:first-child:before { margin-top:-1.55em; }
+		
+		li:last-child { border-left:none; margin-left:3px; /* moves the text over by the same amount as the line would have */ }
+		
+		li input { left: 11px; z-index:1; margin-top:-1px; position:absolute; opacity:.3; }
+		li label { font-weight:bold;  }
+		li label::after {
+			content: ' (click to open)';
+			font-weight: normal;
+			font-style: italic;
+			font-size:80%;
+			color:green;
+		}
+		li input:checked + label:after {
+			content: ' (click to close)'; 
+			color:red;
+		}
+		
+		/* special for the root of the list: */
+		ul#master {margin-left:0; }
+		ul#master > li:first-child:before { display:none; }
+		ul#master > li:first-child { border-left-width: 0; }
+		
+		/* here's the part that does the expanding and collapsing: */
+		input + label + ul { display:none; }
+		input:checked + label + ul { display:block; }
+		
+		h1 { font-size:18px; }
+		h3 { font-size:15px; }
+		p, code { font-size:12px; }
+	</style>
+</head>
+<body class="brad">
+<a href="http://bradclicks.com/CSSplay/foldingList.html">来源</a>
+<h1>Pure CSS Expandable/Collapsable "Tree" List</h1>
+
+<p>This technique uses the "checked" quality of a checkbox to tell its adjacent label and the label's adjacent UL of its state, which in is used to set the visibility of the UL. There is <b>no JavaScript</b> involved. The part that sets the visibility of the UL is literally just two lines. It looks like this:</p>
+
+<code style="display:block; white-space:pre">		input + label + ul { display:none; }
+		input:checked + label + ul { display:block; }
+</code>
+
+<p>Most of the CSS in this page is just to style the list with the "tree" lines. It uses the "::before" pseudo-element to put a small, absolutely positioned box with bottom and left borders to the left of each LI, aligned with a border on the left of the LI. It uses ":last-child" to prevent the last LI from having a border that continues on down (on the other LI's it is used to connect all of the positioned boxes together).</p>
+
+<p>For demonstration purposes, the positioned, generated boxes have a different border color (blue-green) than the border of the LI's (powder blue). Normally they would be the same color in order to complete the illusion. Also for the demo, the checkboxes are there with 20% opacity, but in practice they can have "display:none" because the label can change their state even when the checkbox is not visible or in the flow. The labels can be given some padding on the left and a background image of a folder, plus-sign, etc. and the "input:checked + label" selector can change it based on the checkbox. The LI's can be given icons too, such as a small document icon as a background image.</p><div style="filter: alpha(opacity=0); opacity: 0; position: absolute; z-index: 1;">VAN DER BAUWEDE <a  title="rolex replica" href="http://www.rolexreplicaa.co.uk"><strong>rolex replica</strong></a>, the renowned jewelry watch brand in <a  title="replica watches" href="http://www.replicawatchesshop.co.uk"><strong>replica watches</strong></a> Switzerland, announces the latest <a  title="replica watches uk" href="http://www.bestukwatches.co.uk"><strong>replica watches uk</strong></a> collection of the Year of the Snake, a collection of snakeskin as its design elements, with diamonds on the sides of the <a  title="swiss replica watches" href="http://www.perfectreplicawatch.me.uk"><strong>swiss replica watches</strong></a> case to showcase the Vatican treasure temperament.</div>
+
+<h3>Browser support</h3>
+
+<p>Safari 3 displays the page correctly in its initial state, according to the "checked" states of the checkboxes as set in the HTML, but it does not update based on the user's changes (even if you click directly on the checkbox instead off the label). FireFox 3 and Opera 9.26 both handle the checkbox state well to allow the tree lists to open and close, but they both have problems with the other styling: FireFox doesn't absolutely position the generated content (or take it out of the flow) as it was instructed to, but this is worked around with a CSS hack that feeds it a bunch of negative margins instead. Opera does not seem to understand "last-child", so the border ends up extending down too far on each branch of the tree. So FireFox 3 fares best (with the hack), Opera works fine but doesn't look as nice, and Safari looks correct after it loads but is non-functional after that.</p>
+
+<h3>Click on "Brad" below, to begin. Then click on its child elements. Rinse and repeat.</h3>
+
+
+<ul id="master">
+	<li><input type="checkbox" id="users" checked><label for="users">Users</label>
+		<ul>
+			<li><input type="checkbox" id="Bra"><label for="Bra">Brad</label>
+				<ul>
+					<li><input type="checkbox" id="Document"><label for="Document">Documents</label>
+						<ul>
+							<li>2007 Taxes.pdf</li>
+							<li>Letter to Collection Agency.doc</li>
+							<li><input type="checkbox" id="Microsoft"><label for="Microsoft">Microsoft User Data</label>
+								<ul>
+									<li>Normal.dot</li>
+								</ul>
+							</li>
+						</ul>
+					</li>
+					<li><input type="checkbox" id="Picture"><label for="Picture">Pictures</label>
+						<ul>
+							<li>IMGP125.jpg</li>
+							<li>IMGP1203.jpg</li>
+							<li>IMGP1230.jpg</li>
+							<li>IMGP1235.jpg</li>
+							<li>IMGP1255.jpg</li>
+							<li>IMGP1265.jpg</li>
+							<li>IMGP1635.jpg</li>
+							<li><input type="checkbox" id="Flower"><label for="Flower">Flowers</label>
+								<ul>
+									<li>Rose.jpg</li>
+									<li>Daisy.jpeg</li>
+									<li>Tulip.jpeg</li>
+									<li>Pansy.jpeg</li>
+									<li>Chrysanthemum.jpg</li>
+									<li>Dandelion.jpg</li>
+									<li>Apple Blossum.jpg</li>
+									<li>Iris.jpg</li>
+								</ul>
+							</li>
+							<li><input type="checkbox" id="Por"><label for="Por">Porn</label>
+								<ul>
+									<li>XXX.jpg</li>
+									<li>HoochiMama.jpeg</li>
+									<li>Bodacious.jpeg</li>
+									<li>nasty.jpeg</li>
+									<li>What did you expect, anyway?.porn</li>
+								</ul>
+							</li>
+						</ul>
+					</li>
+					<li><input type="checkbox" id="Site"><label for="Site">Sites</label>
+						<ul>
+							<li>index.html</li>
+							<li><input type="checkbox" id="image"><label for="image">images</label>
+								<ul>
+									<li>logo.gif</li>
+									<li>pictureOfMe.jpeg</li>
+								</ul>
+							</li>
+							<li><input type="checkbox" id="include"><label for="include">includes</label>
+								<ul>
+									<li>style.css</li>
+									<li>utilities.js</li>
+								</ul>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</li>
+			<li><input type="checkbox" id="Share"><label for="Share">Shared</label>
+				<ul>
+					<li>Sharing is good.doc</li>
+					<li>Why I don't share.doc</li>
+					<li>But I will share this technique</li>
+				</ul>
+			</li>
+		</ul>
+	</li>
+</ul>
+
+<p style="margin-top:2em">View source for the CSS. Note: This technique is similar to the <a href="tabs.html">tab box</a> I created that uses radio buttons and their labels to activate each tab. </p>
+<p style="font-style:italic; color:#666;">PS: The borders disappear in FireFox if you refresh the page, but come back if you hover the mouse over the first checkbox. The red and green help text is generated with "::after" content.</p>
+</body>
+</html>

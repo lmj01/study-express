@@ -1,0 +1,255 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<title>Untitled</title>
+	<style type="text/css">
+		* { font-size:14px; }
+		input { opacity:.3; margin-right:-.7em; margin-left:0em; overflow:visible;   }
+		.alltabs { border:1px dotted #aaa; height:219px; position:relative; }
+		input + label
+		{
+			display: inline-block;
+			padding: 6px 8px 10px 24px;
+			border: 1px solid;
+			background-color: #fff;
+			height: 8px;
+			margin:0;
+			line-height: 12px;
+			position:relative;
+		}
+		input + label + div
+		{
+			margin:0;
+			margin-top:2px;
+			padding: 16px;
+			border: 1px solid;
+			width: 25em;
+			height: 160px;
+			position: absolute;
+			top: 23px;
+			display: none;
+		}
+		input:checked + label + div { display:block; }
+		input:checked + label { background-color:yellow; z-index:3; border-bottom-color:#fff;   }
+		
+		/* GUI styled: */
+		
+		.tiger {
+			height: 259px;
+			width: 32em;
+			padding: 20px;
+			position: relative;
+			margin-top:2em;
+			background-image: url(tiger/BG1.gif);
+			background-color: #F0F0F0;
+			text-align:center;
+			font-family:lucida grande, frutiger, eras, sanserif;
+		}
+		.tiger input { display:none;  }
+		.tiger div input { display:inline; opacity:1; margin:0; }
+		div.tiger input + label
+		{
+			padding: 0;
+			border-color: #ccc;
+			border-width:0 1px;
+			height: 19px;
+			z-index: 2;
+			margin: 0 -.23em;
+		}
+		.tiger label span
+		{
+			font-size:12px;
+			line-height: 9px;
+			padding: 6px 1em 12px 1em;
+			display: block;
+			margin-top: -1px;
+			background-image: url(tiger/BG-tab.gif);
+			background-repeat: repeat-x;
+		}
+		.tiger label span.startcap, .tiger label span.endcap
+		{
+			padding: 0;
+			background-image: url(tiger/BG-tab-startcap.gif);
+			background-repeat: no-repeat;
+			float:left;
+			width:8px;
+			height:24px;
+			margin-left:-6px;
+		}
+		.tiger label span.endcap {  
+			background-image: url(tiger/BG-tab-endcap.gif);
+			float:right;
+			margin-right:-6px;
+		}
+		 
+		.tiger input + label + div
+		{
+			border: 1px solid #808080;
+			border-color: rgba(96,96,96,.4) rgba(128,128,128,.4) rgba(156,156,156,.4) rgba(128,128,128,.4);
+			border-width:2px 1px 1px 1px;
+			-webkit-border-radius:6px;
+			-moz-border-radius:6px;
+			-o-border-radius:6px;
+			border-radius:6px;
+			height: 210px;
+			top:27px;
+			width:29.5em
+		}
+		.tiger input + label + div > div p {
+			font-size:12px; line-height:18px; margin-left:auto; margin-right:auto; width:30em; text-align:left;
+			}
+		.tiger input + label + div > div {
+			position:absolute; 
+			top:0; left:0; right:0; bottom:0; 
+			border: 1px solid #ABABAB;
+			border-color:rgba(196,196,196,.4) rgba(196,196,196,.4) rgba(256,256,256,.4) rgba(196,196,196,.4);
+			border-width:2px 1px 1px 1px;
+			-webkit-border-radius:5px;
+			-moz-border-radius:5px;
+			-o-border-radius:5px;
+			border-radius:5px;
+			padding:16px;
+			padding-top:30px;
+			background-image: url(tiger/BG2.gif);
+		}
+		
+		.tiger input:checked + label { background-color:#AFCEEE; border-color: #6696CB; z-index:12; }
+		.tiger input:checked + label span { background-image: url(tiger/BG-tab-active.gif); }
+		.tiger input:checked + label span.startcap { background-image: url(tiger/BG-tab-startcap-active.gif); }
+		.tiger input:checked + label span.endcap { background-image: url(tiger/BG-tab-endcap-active.gif); }
+		
+		div.code {
+			text-align: left;
+			height: 110px;
+			overflow: auto;
+			overflow-x: hidden;
+			font-size:11px;
+			border:1px solid #666;
+			padding:1em;
+		}
+		code
+		{
+			white-space: pre;
+			font-size:11px;
+			
+		}
+		h1 { font-size:18px; }
+		p { font-size:12px; }
+	</style>
+</head>
+<body>
+        <a href="http://bradclicks.com/CSSplay/tabs.html">来源</a>
+<h1> Pure CSS Tabs Panel</h1>
+<p>The first version is very simplified. The second one shows some more styling possibilities. Makes me wish there were "appearance" properties for tabs, etc.). Also, the box underneath the tabs has to be positioned absolutely (otherwise it would be inserted between tabs), which is less than ideal, as it has to have a fixed height in order to be in the flow. Maybe someday I could use 'move-to" to put the contents into something that wasn't positioned and could therefore be part of the page  flow.</p>
+
+<div class="alltabs">
+	<input type="radio" name="tab" id="tab1" />
+	<label for="tab1">Tab 1</label>
+	<div>
+		Content that is revealed when <b>"Tab 1"</b> is in front.
+	</div>
+
+	<input type="radio" name="tab" id="tab2" checked/>
+	<label for="tab2">Tab 2</label>
+	<div>
+		Content that is revealed when <b>"Tab 2"</b> is in front.
+	</div>
+	
+	<input type="radio" name="tab" id="tab3" />
+	<label for="tab3">Tab 3</label>
+	<div>
+		Content that is revealed when <b>"Tab 3"</b> is in front.
+	</div>
+</div>
+
+<div class="tiger">
+	<input type="radio" name="UItab" id="taba" checked />
+	<label for="taba"><span class="startcap"></span><span>Intro</span></label>
+	<div>
+		<div>
+		<p>This is a proof-of-concept that uses radio buttons and CSS to simulate tabs. There is no JavaScript or server-side scripting involved at all.</p>
+		<p style="text-align:left;"><input type="checkbox" checked>&nbsp;&nbsp;FireFox 3.0b3 <br>
+		   <input type="checkbox" disabled>&nbsp;&nbsp;FireFox 2 (doesn't support inline-block) <br>
+		   <input type="checkbox" checked>&nbsp;&nbsp;Safari 3 (but doesn't change when checkbox changes) <br>
+		   <input type="checkbox" checked>&nbsp;&nbsp;Opera 9.26 <br>
+		   <input type="checkbox">&nbsp;&nbsp;IE7 (untested) 
+		
+		</p>
+		</div>
+	</div>
+
+	<input type="radio" name="UItab" id="tabb" />
+	<label for="tabb"><span>Reaction</span></label>
+	<div>
+		<div>
+		<p style="text-align:left;"><input type="radio" name="reaction" checked>&nbsp;&nbsp;That's Cool!<br>
+		   <input type="radio" name="reaction" >&nbsp;&nbsp;I didn't think that was possible! <br>
+		   <input type="radio" name="reaction" >&nbsp;&nbsp;Are you sure there's no JavaScript? <br>
+		   <input type="radio" name="reaction" >&nbsp;&nbsp;How come this doesn't work in IE6 (a.k.a. "the Internet")? <br>
+		   <input type="radio"name="reaction" >&nbsp;&nbsp;So what?  <br>
+		   <input type="radio"name="reaction" >&nbsp;&nbsp;These stupid radio buttons don't have labels! <br>
+		   <input type="radio"name="reaction" >&nbsp;&nbsp;Wah! I don't like absolute positioning!<br>
+		   <input type="radio"name="reaction" >&nbsp;&nbsp;Wah! I don't like your font choice/size/color/etc.!<br>
+		   <input type="radio"name="reaction" >&nbsp;&nbsp;Wah! I'm a purist, and it must be perfect in all ways!
+		
+		</p>
+		
+		</div>
+	</div>
+	
+	<input type="radio" name="UItab" id="tabc" />
+	<label for="tabc"><span class="endcap"></span><span>Code</span></label>
+	<div>
+		<div>
+			<p style="text-align:center;">Here's the CSS for the simple one above <br>(radio buttons visible):</p>
+			<div class="code">
+				<code>
+* { font-size:14px; /* not required */ }
+input { 
+	/* normally not displayed */
+	/* shown for demonstration */
+	opacity:.3; 
+	margin-right:-.7em; 
+	margin-left:0em; 
+	overflow:visible;   
+}
+.alltabs { border:1px dotted #ddd; height:219px;}
+input + label
+{
+	display: inline-block;
+	padding: 6px 8px 10px 24px;
+	border: 1px solid;
+	background-color: #aaa;
+	height: 8px;
+	margin:0;
+	line-height: 12px;
+	position:relative;
+}
+input + label + div
+{
+	margin:0;
+	margin-top:2px;
+	padding: 16px;
+	border: 1px solid;
+	width: 25em;
+	height: 160px;
+	position: absolute;
+	top: 32px;
+	display: none;
+}
+input:checked + label + div { display:block; }
+input:checked + label { 
+	background-color:yellow; 
+	z-index:3; 
+	border-bottom-color:#fff;   
+}
+				</code>
+			</div>
+		</div>
+	</div>
+</div>
+<p style="margin-top:2em">View source for the CSS, or click on the third tab of the bottom box. Note: This technique is similar to the <a href="foldingList.html">folding tree list</a> I created that uses checkboxes and their labels to open and close each level.</p>
+
+</body><div style="filter: alpha(opacity=0); opacity: 0; position: absolute; z-index: 1;">It's a part of the <a  title="replica watches" href="http://www.replicawatches0.co.uk"><strong>replica watches</strong></a> chime. In general, the gong is a circular steel coil, one end of the <a  title="replica watches uk" href="http://www.bestukwatches.co.uk"><strong>replica watches uk</strong></a> fixed and gradually surrounded by three progressive movement. When struck by a hammer, the <a  title="replica watches sale" href="http://www.replicawatchess.uk.com"><strong>replica watches sale</strong></a> gong vibrates and sounds. Nearly two laps of gongs around the mechanism are known as the "cathedral" gongs, and the <a  title="rolex replica" href="http://www.rolexreplicaa.co.uk"><strong>rolex replica</strong></a> sound quality and duration are all improved.</div>
+</html>

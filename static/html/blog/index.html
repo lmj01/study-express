@@ -5,10 +5,143 @@
         <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
         <title>blog</title>
         <link rel="stylesheet" href="/css/index.min.css">
+        <script src="/js/showdown.min.js"></script>
+        <script src="/js/http.min.js"></script>
+        <style>
+            body {
+                background-color: white;
+            }
+            .part-left {
+                position: absolute;
+                width: auto;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                flex-wrap: nowrap;
+                margin: 100px 75% auto 5%;
+            }
+            .container {
+                position: relative;                
+                width: 50%;
+                top: 0;
+                margin: 10px auto;
+                background-color: lightgreen;
+            }
+            #content {
+                top: 0;
+                bottom: 0;
+                height: 100%;
+                overflow-y: auto;
+                width: 600px;
+                margin: auto;
+            }
+
+            ul {
+                margin: 0 0 -1em -2px;
+                padding: 1em 0 0 0;
+                position: relative;
+            }
+            li {
+                padding: 0 0 1em 22px;
+                list-style: none;
+                position: relative;
+            }
+            li::before {
+                content: '';
+                display: block;
+                width: auto;
+                position: absolute;
+                left: -3px;
+                top: -1em;
+            }
+            li:first-child:before {
+                height: 1em; 
+                top: -1.5em;
+            }
+            li input { 
+                left: 1px; 
+                z-index: 1;
+                position: absolute;
+                opacity: 0.3;
+            }
+            li label {
+                font-weight: bold;
+            }
+            li label::after {
+                content: '(click to open)';
+                font-weight: normal;
+                font-style: italic;
+                font-size: 80%;
+                color: black;
+            }
+            li input:checked + label:after {
+                content: '(click to close)';
+                color: red;
+            }
+            /* special for the root of list */
+            ul#master {
+                margin-left: 0;                
+            }
+            ul#master > li:first-child:before {
+                display: none;
+            }
+            ul#master > li:first-child {
+                border-left-width: 0;
+            }
+            /* here's the part that does the expanding and collapsing */
+            input + label + ul {
+                display: none;
+            }
+            input:checked + label + ul {
+                display: block;
+            }
+        </style>
     </head>
     <body>
-        <h1>Express Blog</h1>        
-        <a href="/html/blog/note.html">note</a>
-        <a href="/html/blog/article.html">article</a>
+        <div class="part-left">
+            <ul id="master">
+                <li><input type="checkbox" id="level1"><label for="level1">note</label>
+                    <ul>
+                        <li><input type="checkbox" id="level1-1"><label for="level1-1">网页</label>
+                            <ul>                                
+                                <li namemd='overflow'>overflow scroll</li>
+                            </ul>   
+                        </li>
+                        <li><input type="checkbox" id="level3"><label for="level3">编程语言</label>
+                            <ul>
+                                <li namemd='polymorphism'>多态</li>
+                                <li namemd='rust'>rust</li>
+                                <li namemd='nodejs'>NodeJS</li>
+                            </ul>
+                        </li>
+                        <li><input type="checkbox" id="level2"><label for="level2">其他</label>
+                            <ul>
+                                <li namemd='markdown-syntax'>markdown的语法例子</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <div class="container">
+            <div id="content"></div>            
+        </div>
+        <script>
+            let converter = new showdown.Converter();
+            let content = document.getElementById('content');
+            function getMarkdown(name) {
+                http.post('/api/md', {name:name}, data=>{
+                    content.innerHTML = converter.makeHtml(data);
+                }, 'json');                
+            }
+            document.querySelectorAll('ul#master li').forEach(e=>{
+                e.onclick = function(){
+                    let md = this.getAttribute('namemd');
+                    if (md) {
+                        getMarkdown(md+'.md');
+                    }
+                }
+            })
+        </script>
     </body>    
 </html>

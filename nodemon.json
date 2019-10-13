@@ -2,6 +2,7 @@
     "verbose": true,
     "ignore" : [
         ".git",
+        "*.md",        
         "node_modules/**/node_modules",
         "static/css",
         "static/html",
