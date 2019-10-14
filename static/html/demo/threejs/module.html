@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>dynamic noise - color mapping</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        #app {
+            position: absolute;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script>
+        const ColorMapShader = {
+            uniforms: {                
+            },
+            vertexShader: `                
+                void main( void ) {
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+                }
+            `,
+            fragmentShader: `
+                void main( void ) {
+                    vec3 color = vec3(.5, 0.2, 0.5);
+                    gl_FragColor = vec4( color, 1.0 );
+                }
+            `
+            };
+    </script>
+    <script type="module">
+        import {
+            Scene
+            , PerspectiveCamera
+            , OrthographicCamera
+            , WebGLRenderer
+            , WebGLRenderTarget
+            , Clock
+            , AmbientLight
+            , DirectionalLight
+            , Mesh
+            , ShaderMaterial
+            , MeshBasicMaterial
+            , PlaneBufferGeometry
+            , SphereBufferGeometry
+            , BoxGeometry
+            , MeshPhongMaterial
+            , AxesHelper
+
+            , RepeatWrapping
+        } from "/js/threejs/three.module.js"; 
+        class App {
+            constructor(container = document.body, fov = 70, far = 5000) {
+                if (!(container instanceof HTMLElement)) {
+                    throw new Error('container is not a HTMLElement!');
+                }
+                // Initialize the scene
+                const scene = new Scene();
+
+                // Initialize the camera
+                const camera = new PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 0.1, far);
+                camera.position.set(- 10, 20, 260);
+                scene.add(camera);
+                // Initialize the renderer
+                const renderer = new WebGLRenderer({ antialias: true });
+                this.scene = scene;
+                this.camera = camera;
+                this.renderer = renderer;
+                this.clock = new Clock();
+                this._initRender();
+                container.appendChild(renderer.domElement);
+                this.start();
+            }
+            _initRender() {
+                const { scene, camera, renderer, clock } = this;
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.shadowMap.enabled = true;
+                renderer.setPixelRatio(window.devicePixelRatio);
+                window.addEventListener('resize', e => {
+                    // justify the renderer when resize the window
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                }, false);
+                renderer.setAnimationLoop(() => {
+                    const delta = clock.getDelta();
+                    this.update(delta);
+                    renderer.setRenderTarget(null);
+                    renderer.render(scene, camera);
+                });
+            }
+            start() {
+                this.addLight();
+                this.addBall();
+            }
+            update(delta) {
+                //this.uniformsNoise['time'].value += delta;     
+                //this.uniformsNoise['time'].value = 1.0;     
+                //console.log(this.uniformsNoise.time);           
+                this._renderNoise();
+            }
+            initNoise() {
+                const { scene, renderer } = this;
+                const cameraOrtho = new OrthographicCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, - 10000, 10000);
+                const colorMapMaterial = new ShaderMaterial({
+                    vertexShader: ColorMapShader.vertexShader,
+                    fragmentShader: ColorMapShader.fragmentShader,
+                    uniforms: ColorMapShader.uniforms,
+                    lights: false
+                });
+
+                const plane = new PlaneBufferGeometry(window.innerWidth, window.innerHeight);
+                const noise = new Mesh(plane, colorMapMaterial);
+                scene.add(noise);
+                const colorMap = new WebGLRenderTarget(512, 512);
+                colorMap.texture.generateMipmaps = true;
+                colorMap.texture.wrapS = colorMap.texture.wrapT = RepeatWrapping;
+                this.noise = noise;
+                this.colorMap = colorMap;
+                this.uniformsNoise = colorMapMaterial.uniforms;
+                this.cameraOrtho = cameraOrtho;
+                this._renderNoise();
+            }
+            _renderNoise() {
+                const { scene, noise, colorMap, renderer, cameraOrtho } = this;
+                noise.visible = true;
+                renderer.setRenderTarget(colorMap);
+                renderer.clear();
+                renderer.render(scene, cameraOrtho);
+                noise.visible = false;
+            }
+            addLight() {
+                const { scene } = this;
+                scene.add(new AmbientLight(0xcccccc));
+                const directionalLight = new DirectionalLight(0xffffff, 0.08);
+                directionalLight.position.set(500, 2000, 0);
+                scene.add(directionalLight);
+            }
+            addBall() {
+                const { scene } = this;
+                this.initNoise();
+                // create a ball
+                const geometry = new SphereBufferGeometry(50, 32, 32);
+                const material = new MeshPhongMaterial({
+                    shininess: 5,
+                    depthTest: true,
+                    depthWrite: true,
+                    map: this.colorMap.texture
+                });
+                const ball = new Mesh(geometry, material);
+                ball.rotation.set(0, -Math.PI, 0);
+                scene.add(ball);
+
+                var gCube = new BoxGeometry( 60, 30, 180 );
+                var mCube = new MeshBasicMaterial( { color: 0x00ff00 } );
+                var cube = new Mesh( gCube, mCube );
+                scene.add(cube);
+
+                scene.add(new AxesHelper(100));
+            }
+        }
+        new App(document.getElementById('app'));
+    </script>
+</body>
+
+</html>

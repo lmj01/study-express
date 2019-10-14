@@ -7,6 +7,8 @@ package-lock.json
 node_modules/
 static/css
 static/css-tmp
-static/js
+static/js/*
+!static/js/imgui/
+!static/js/lib/
 static/images
 uploadfiles

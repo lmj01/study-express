@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+</style>
+<script src="/js/threejs/three.js"></script>
+</head>
+<body>
+    <script>
+        
+var pScene = new THREE.Scene();
+
+var pCam = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
+pCam.position.set(0, 40, 50);
+pCam.lookAt(new THREE.Vector3(0, 0, -50));
+
+pScene.add(pCam);
+pScene.add(new THREE.AmbientLight(0xFFFFFF));
+/*
+ in the GridHelper source code, 
+ get the size and divisions after,
+ draw the lines from left-bottom to top-right
+ make the orgin in the center for the 2d plane
+ the first iterator is the left
+ the second iterator is the middle
+ the third iterator is the right
+ |            | |           | | |
+ |            | |           | | |
+ |            | |           |_|_|_______
+ |            |_|________   |_|_|_______
+ |_______     |_|________   |_|_|_______
+ so make some line not draw to customer different grid
+ like to make the ruler-grid
+ */
+var grid = new THREE.GridHelper(10, 10, 0x444444, 0x888888);
+pScene.add(grid);
+
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+renderer.autoClear = false;
+renderer.render(pScene, pCam);
+
+    </script>        
+</body>
+</html>
