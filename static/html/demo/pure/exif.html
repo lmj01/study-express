@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+        <title>Exif</title>
+        <link rel="stylesheet" href="/css/register.min.css">
+        <script src="/js/lib/exif.js"></script>
+        <style>
+            .category {
+                display: flex;
+                flex-direction: column;
+            }
+            .category span {
+                margin: auto 10px;
+            }
+            canvas {
+                width: 100px;
+                height: 100px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>图片的元数据信息</h1>
+        <div class="category">
+            <input type="file" id="ctrlInput" accept="image/*">
+            <label>图片EXIF</label>
+            <pre id="info"></pre>
+        </div>
+        <canvas id="canvas" width="100" height="100"></canvas>   
+        <script>
+            let input = document.getElementById('ctrlInput');
+            let info = document.getElementById('info');
+            let canvas = document.getElementById('canvas');
+            let target;
+            function imageDimension(imgsrc, cb) {
+                let img = new Image();                
+                img.onload = function() {
+                    if (cb) cb({
+                        width: img.naturalWidth,
+                        height: img.naturalHeight    
+                    })
+                }
+                img.src = imgsrc;
+            }
+            input.addEventListener('change', e=>{
+                target = e.target;
+                let file = target.files[0];
+                // let fread = new FileReader();
+                // fread.onload = function(theFile) {
+                //     let ctx = canvas.getContext('2d');
+                //     let img = new Image();
+                //     img.onload = function() {         
+                //         ctx.drawImage(img, 0, 0, 100, 100);               
+                //         width.textContent = this.width + 'px';
+                //         height.textContent = this.height + 'px';
+                //         console.log(this.width, this.height, 
+                //         this.naturalWidth, this.naturalHeight,
+                //         this);
+                //     }
+                //     img.src = theFile.target.result;    
+                //     imageDimension(theFile.target.result, dim=>{
+                //         console.log(dim);
+                //     });
+                // }
+                // fread.readAsDataURL(file);
+                // EXIF.getData(file, function() {
+                //     console.log(EXIF.getTag(this, 'Orientation'),
+                //     EXIF.getTag(this, 'PixelXDimension'),
+                //     EXIF.getTag(this, 'PixelYDimension')                    
+                //     );
+                //     info.textContent = EXIF.pretty(this);
+                // })
+                EXIF.getData(file, function(){
+                    console.log(EXIF.getTag(this, 'Orientation'),
+                    EXIF.getTag(this, 'PixelXDimension'),
+                    EXIF.getTag(this, 'PixelYDimension')                    
+                    );
+                    info.textContent = EXIF.pretty(this);
+                })
+            });
+        </script>
+    </body>    
+</html>
