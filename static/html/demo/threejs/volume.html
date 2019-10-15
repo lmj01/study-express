@@ -714,8 +714,7 @@ void main(void)
             camera = new THREE.PerspectiveCamera(45, 
                 aspectRatio,
                 0.01, 10000);
-            //camera.position.z = 605;
-            camera.position.z = -5;
+            camera.position.set(257, 597, 1604);
         } else {
             let frustum = { h: 256, };
             camera = new THREE.OrthographicCamera(
@@ -724,7 +723,7 @@ void main(void)
                  frustum.h / 2, -frustum.h / 2, 
                  -0.1, 100000);
             camera.up.set(0,1,0);
-            camera.position.z = 20;
+            camera.position.set(2, 2, -20);
         }
 
         let light = new THREE.DirectionalLight(0xff0000, 0.5);
@@ -803,14 +802,12 @@ void main(void)
             gray: new THREE.TextureLoader().load('./cm_gray.png', renderer)
         };
 
-        let orbitControl = new THREE.OrbitControls(camera
-                , renderer.domElement
-                );
-        //orbitControl.maxPolarAngle = Math.PI * 2;
+        let orbitControl = new THREE.OrbitControls(camera, renderer.domElement);
+        orbitControl.maxPolarAngle = Math.PI * 2;
         orbitControl.target.set(0, 0, 0);
-        //orbitControl.update();
+        orbitControl.update();
 
-        let axesHelper = new THREE.AxesHelper(500);
+        let axesHelper = new THREE.AxesHelper(200);
         scene.add(axesHelper);
         
         function loadRaw() {
@@ -831,17 +828,14 @@ void main(void)
                 xhr.send();
             })).then((data)=>{
                 return JSZip.loadAsync(data.buffer)
-                //.generateAsync({type:'uint8array'});
             }).then(zip=>{
-                // console.log(zip);
-                // zip.generateAsync({type:'uint8array'});
                 let file = zip.files['head256x256x109'];
                 return file._data.compressedContent;
             }).then(buffer=>{                
                 let texture = new THREE.DataTexture3D(buffer, volume.resx, volume.resy, volume.resz);
                 texture.format = THREE.RedFormat;
                 texture.type = THREE.UnsignedByteType;
-                //texture.type = THREE.FloatType;
+                texture.type = THREE.FloatType;
                 texture.minFilter = texture.magFilter = THREE.LinearFilter;
                 texture.unpackAlignment = 1;
                 texture.needsUpdate = true;
@@ -862,8 +856,8 @@ void main(void)
                         uSaturation:{value:1.0},
                         uPower:{value:5},
                         uViewport:{value:new THREE.Vector4(0, 0, 
-                                canvas.clientWidth, canvas.clientHeight
-                                //volume.resx, volume.resy
+                                //canvas.clientWidth, canvas.clientHeight
+                                volume.resx, volume.resy
                                 )},
                         uSamples:{value:256},
                         uDensityFactor:{value:3},
@@ -954,11 +948,11 @@ void main(void)
                             6, 7, 3
                         ]); 
                         //vertexArray.map((e,i,a)=>a[i]=e*128.0);
-                        vertexArray.map((e,i,a)=>a[i]=(e+0.5));
+                        //vertexArray.map((e,i,a)=>a[i]=(e+0.5));
                 let gCube = new THREE.BufferGeometry();
                 gCube.addAttribute('position', new THREE.BufferAttribute(vertexArray, 3));
                 gCube.setIndex(new THREE.BufferAttribute(indexArray, 1));
-                if (true) {
+                if (false) {
                     m = new THREE.Mesh(gCube, materialVolume);
                     m.name = 'planeVolume';
                     m.position.set(0,0,0);
@@ -993,8 +987,8 @@ void main(void)
                         gLine.addAttribute('position', new THREE.BufferAttribute(vertexArray, 3));
                         gLine.addAttribute('color', new THREE.BufferAttribute(colorArray, 4));
                         m4 = new THREE.Line(gLine, 
-                                //new THREE.LineBasicMaterial({vertexColors:THREE.VertexColors})
-                                materialLine
+                                new THREE.LineBasicMaterial({vertexColors:THREE.VertexColors})
+                                //materialLine
                                 );
                         m4.position.set(0, 0, 0);
                         m4.updateMatrix();
@@ -1002,7 +996,7 @@ void main(void)
                         scene.add(m4);
                     }
                 }
-                if (true) {
+                if (false) {
                     m2 = new THREE.Mesh(
                             new THREE.PlaneBufferGeometry(256,256, 1, 1), 
                             materialPlane);
@@ -1016,10 +1010,10 @@ void main(void)
                 }
 
                 let volgeometry = new THREE.BoxBufferGeometry(
-                        volume.resx, volume.resy, volume.resz
-                        //volume.resx/2, volume.resy/2, volume.resz/2
+                        //volume.resx, volume.resy, volume.resz
+                        volume.resx/2, volume.resy/2, volume.resz/2
                         );
-                volgeometry.translate(volume.resx/2-0.5, volume.resy/2-0.5, volume.resz/2-0.5);
+                //volgeometry.translate(volume.resx/2-0.5, volume.resy/2-0.5, volume.resz/2-0.5);
                 volmesh = new THREE.Mesh(volgeometry, 
                         new THREE.RawShaderMaterial({
                             uniforms: {
@@ -1047,11 +1041,10 @@ void main(void)
                 volmesh.matrixWorldNeedsUpdate = true;
                 //volmesh.scale.set(0.01, 0.01, 0.01);
                 //volmesh.translateX(4);
-                volmesh.position.set(-128.5, -128.5, 128);
+                //volmesh.position.set(-128.5, -128.5, 128);
                 volmesh.updateMatrix();
                 scene.add(volmesh);
             })
-            //});
         }
         function updateUniforms() {
 
@@ -1105,8 +1098,8 @@ void main(void)
                 u.umodelview.value = m4.modelViewMatrix;
                 u.uproject.value = camera.projectionMatrix;
 
-                //m4.rotation.x += 0.01;
-                //m4.rotation.y += 0.01;
+                m4.rotation.x += 0.01;
+                m4.rotation.y += 0.01;
             }
             if (volmesh && volmesh.ok) {
                 let u = volmesh.material.uniforms;
@@ -1120,14 +1113,14 @@ void main(void)
                 u.urenderthreshold.value = volconfig.isothreshold;
                 u.ucolormap.value = voltextures[volconfig.colormap];
 
-                //volmesh.rotation.x += 0.01;
-                //volmesh.rotation.y += 0.01;
+                volmesh.rotation.x += 0.01;
+                volmesh.rotation.y += 0.01;
             }
         }
         function updateFrame() {
             requestAnimationFrame(updateFrame);
 
-            //orbitControl.update();
+            orbitControl.update();
 
             renderer.render(scene, camera);
 
