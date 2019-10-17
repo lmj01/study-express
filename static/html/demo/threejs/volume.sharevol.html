@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script id="vs" type="x-shader/x-vertex">
+#version 300 es
+precision highp float;
+
+layout(location = 0) in vec3 position;
+uniform mat4 umodelview;
+uniform mat4 uproject;
+void main()
+{
+    gl_Position = uproject * umodelview * vec4(position, 1.0);
+}
+</script>
+<script id="fs" type="x-shader/x-fragment">
+#version 300 es
+precision highp float;
+precision highp sampler3D;
+
+out vec4 FragColor;
+const int maxSamples = 128;
+
+uniform sampler3D uvolume; // 2d data texture
+
+uniform vec3 uBBMin; // box for intersect to make qualifier for ray trace
+uniform vec3 uBBMax; 
+uniform vec3 uResolution; // for the volume in x,y,z-axis 
+
+uniform float uBrightness;
+uniform float uContrast; 
+uniform float uSaturation;
+uniform float uPower;
+
+uniform mat4 uproject; // project matrix -perspective
+uniform mat4 uinvproject; // invert project matrix 
+uniform mat4 umodelview; // model view matrix 
+uniform mat3 unormal; // normal matrix
+uniform vec4 uViewport; 
+uniform int uSamples;
+// isosurface , it is a surface that represents points of a constant value(density),
+// within a volume of space, in other words, it is a level set of
+// a continuous function whose dmoain is 3D-space.
+// in medical imaging, isosurfaces may be used to represent regions of a particular 
+// density in a three-dimensional CT scan, allowing the visulaiztion of internal organs,
+// bones, or other structures.
+// isosurface is the important role to 3d-vis
+uniform float uDensityFactor; 
+uniform float uIsoValue;
+uniform vec4 uIsoColour;
+uniform float uIsoSmooth;
+uniform int uIsoWalls;
+
+uniform vec2 uRange;
+uniform vec2 uDenMinMax;
+
+//Light moves with camera
+const vec3 LightPos = vec3(0.5, 0.5, 5.0);
+const float Ambient = 0.2;
+const float Diffuse = 0.8;
+const vec3 DiffColor = vec3(1.0, 1.0, 1.0);
+const vec3 AmbColor = vec3(0.2, 0.2, 0.2);
+
+void lighting(in vec3 pos, in vec3 normal, inout vec3 colour)
+{
+    // in camera coordinate space
+    vec4 vertPos = umodelview * vec4(pos, 1.0);
+    vec3 lightDir = normalize(LightPos - vertPos.xyz);
+    vec3 lightWeighting = AmbColor + DiffColor * Diffuse * clamp(abs(dot(normal, lightDir)), 0.1, 1.0);
+    colour *= lightWeighting;
+}
+
+vec3 isoNormal(in vec3 pos, in vec3 shift, in float density)
+{
+  // gradient vector, made up of the partial derivatives along the three axes;
+  // it can be approximated like this 
+  vec3 shiftpos = vec3(pos.x + shift.x, pos.y + shift.y, pos.z + shift.z);
+  vec3 shiftx = vec3(shiftpos.x, pos.y, pos.z);
+  vec3 shifty = vec3(pos.x, shiftpos.y, pos.z);
+  vec3 shiftz = vec3(pos.x, pos.y, shiftpos.z);
+
+  //Detect bounding box hit (walls)
+  if (uIsoWalls > 0)
+  {
+    if (pos.x <= uBBMin.x) return vec3(-1.0, 0.0, 0.0);
+    if (pos.x >= uBBMax.x) return vec3(1.0, 0.0, 0.0);
+    if (pos.y <= uBBMin.y) return vec3(0.0, -1.0, 0.0);
+    if (pos.y >= uBBMax.y) return vec3(0.0, 1.0, 0.0);
+    if (pos.z <= uBBMin.z) return vec3(0.0, 0.0, -1.0);
+    if (pos.z >= uBBMax.z) return vec3(0.0, 0.0, 1.0);
+  }
+
+  //Calculate normal
+  float x = density - texture(uvolume, shiftx).r;
+  float y = density - texture(uvolume, shifty).r;
+  float z = density - texture(uvolume, shiftz).r;
+  return vec3(x,y,z);
+}
+// dir ray's direction
+// pos ray's position
+vec2 rayIntersectBox(vec3 dir, vec3 pos)
+{
+  // BoundingBox is [0,0,0] to [1,1,1]
+  // Intersect ray with bounding box
+  vec3 invdir = 1.0 / dir;
+  // the pos to uBBMin, uBBMax vector project to the dir length
+  vec3 minlen = (uBBMin - pos) * invdir;
+  vec3 maxlen = (uBBMax - pos) * invdir;
+  // make sure the max is max, min is min
+  vec3 rmax = max(maxlen, minlen);
+  vec3 rmin = min(maxlen, minlen);
+  // back is min, front is max, threejs coordinate is the same
+  float back = min(rmax.x, min(rmax.y, rmax.z));
+  float front = max(max(rmin.x, 0.0), max(rmin.y, rmin.z));
+  return vec2(back, front);
+}
+
+vec4 CalcEyeFromWindow(in vec3 windowSpace) 
+{
+    vec3 ndcPos;
+    ndcPos.xy = ((2.0 * windowSpace.xy) - (2.0 * uViewport.xy)) / (uViewport.zw) - 1.0;
+    ndcPos.z = (2.0 * windowSpace.z - gl_DepthRange.near - gl_DepthRange.far) / (gl_DepthRange.far - gl_DepthRange.near);
+
+    vec4 clipPos;
+    clipPos.w = uproject[3][2] / (ndcPos.z - (uproject[2][2] / uproject[2][3]));
+    clipPos.xyz = ndcPos * clipPos.w;
+
+    return uinvproject * clipPos;
+}
+
+void main()
+{
+    //Compute eye space coord from window space to get the ray direction
+    mat4 invmodelview = 
+        transpose(umodelview);
+        //inverse(umodelview);
+    //ObjectSpace *[MV] = EyeSpace *[P] = Clip /w = Normalised device coords ->VP-> Window
+    //Window ->[VP^]-> NDC ->[/w]-> Clip ->[P^]-> EyeSpace ->[MV^]-> ObjectSpace
+    // Local Space(Object Space)
+    // World Space 
+    // View Space(Eye Space)
+    // Clip Space 
+    // Screen Space
+    // localSpace * modelMatrix => worldSpace * viewMatrix => viewSpace * projectMatrix  => clipSpace => viewport => screenSpace
+    // NDC all vertex x,y,z component in [-1.0,1.0]
+    // the gl_FragCoord ,the location in window space, the x,y,z are the window-space position,
+    // the z value will be written to the depth buffer if gl_FragDepth is not written to 
+    // 
+    vec4 ndcPos;
+    // make ndcPos.xy in [-1,1]
+    ndcPos.xy = ((2.0 * gl_FragCoord.xy) - (2.0 * uViewport.xy)) / (uViewport.zw) - 1.0; 
+    // gl_DepthRange { float near; float far; float diff;}
+    ndcPos.z = (2.0 * gl_FragCoord.z - gl_DepthRange.near - gl_DepthRange.far) /
+               (gl_DepthRange.far - gl_DepthRange.near);
+    ndcPos.w = 1.0;
+    vec4 clipPos = 
+        ndcPos / gl_FragCoord.w;
+        //CalcEyeFromWindow(gl_FragCoord.xyz);
+    // get local(object) Space, is the ray-direction
+    vec3 rayDirection = normalize((invmodelview * uinvproject * clipPos).xyz);    
+
+    //Ray origin from the camera position
+    vec4 camPos = -vec4(umodelview[3]);  //4th column of modelview
+    vec3 rayOrigin = (invmodelview * camPos).xyz; // the local(object) space
+
+    
+    //Intersect ray with bounding box
+    vec2 intersection = rayIntersectBox(rayDirection, rayOrigin);
+    //Subtract small increment to avoid errors on front boundary
+    intersection.y -= 0.000001;
+    //Discard points outside the box (no intersection)
+    if (intersection.x <= intersection.y) {
+        // back <= front
+        FragColor = vec4(1,0,0,1);
+        //return;
+        discard;
+    }
+    
+    // ray from near to far 
+    vec3 rayStart = rayOrigin + rayDirection * intersection.y; // front
+    vec3 rayStop = rayOrigin + rayDirection * intersection.x; // back
+
+    //Calc the max step, from the Box min position to the box max position
+    float stepSize = 1.732 / float(uSamples); //diagonal of [0,1] normalised coord cube = sqrt(3)
+    vec3 step = normalize(rayStop - rayStart) * stepSize; // the step length for every step
+    vec3 pos = rayStart;
+
+    float T = 1.0;
+    vec3 colour = vec3(0.0);
+    bool inside = false;
+    vec3 shift = 
+        uIsoSmooth / uResolution;
+        //vec3(0.1, 0.1, 0.1);
+    //Number of samples to take along this ray before we pass out back of volume...
+    float travel = distance(rayStop, rayStart) / stepSize;
+    int samples = int(ceil(travel));
+    float range = uRange.y - uRange.x;
+    if (range <= 0.0) range = 1.0;
+    //Scale isoValue, the equal density surface value,
+    float isoValue = uRange.x + uIsoValue * range;
+    
+    //Raymarch, front to back
+    for (int i=0; i < maxSamples; ++i) {
+        //Render samples until we pass out back of cube or fully opaque
+        if (i == samples || T < 0.01) break;
+        if (all(greaterThanEqual(pos, uBBMin)) && all(lessThanEqual(pos, uBBMax))) 
+        {
+            // Get density, because texture is luminance
+            float density = texture(uvolume, pos).r;
+#define ISOSURFACE
+#ifdef ISOSURFACE
+            // the voxel are not drawn which that less than constant value(iosValue)
+            //Passed through isosurface?
+            if (isoValue > uRange.x && ((!inside && density >= isoValue) || (inside && density < isoValue))) 
+            {
+                inside = !inside;
+                //Find closer to exact position by iteration
+                //http://sizecoding.blogspot.com.au/2008/08/isosurfaces-in-glsl.html
+                /*
+                * For each pixel
+                *    step along ray until surface is hit
+                *    find normal
+                *    light and output colour
+                */
+                float exact;
+                float a = intersection.y + (float(i) * stepSize);
+                float b = a - stepSize;
+                for (int j = 0; j < 8; j++) {
+                    exact = (b + a) * 0.5;
+                    pos = rayDirection * exact + rayOrigin;
+                    density = texture(uvolume, pos).r;
+                    if (density - isoValue < 0.0) {
+                        b = exact;
+                    } else {
+                        a = exact;
+                    }
+                }
+            
+                //Skip edges unless flagged to draw
+                if (uIsoWalls > 0 || (all(greaterThanEqual(pos, uBBMin)) && all(lessThanEqual(pos, uBBMax)))) {
+                    
+                    vec4 value = vec4(uIsoColour.rgb, 1.0);
+                
+                    // threejs normalMatrix use for not calculation normal, or result is non-unit scaling 
+                    vec3 normal = normalize(
+                                    unormal 
+                                    //mat3(umodelview)
+                                    * isoNormal(pos, shift, density));
+                    
+                    vec3 light = value.rgb;
+                    lighting(pos, normal, light);
+                    //Front-to-back blend equation
+                    colour += T * uIsoColour.a * light;
+                    T *= (1.0 - uIsoColour.a);
+                }
+            }
+#endif
+            if (uDensityFactor > 0.0 ) {
+                //Normalise the density over provided range
+                density = (density - uRange.x) / range;
+                density = clamp(density, 0.0, 1.0);
+                if (density < uDenMinMax[0] || density > uDenMinMax[1]) {
+                    //Skip to next sample...
+                    pos += step;
+                    continue;
+                }
+                
+                density = pow(density, uPower); //Apply power
+                vec4 value = vec4(density);
+                value *= uDensityFactor * stepSize;
+                //Color
+                colour += T * value.rgb;
+                //Alpha
+                T *= 1.0 - value.a;
+            }
+        }
+         
+        //Next sample...
+        pos += step;
+    }
+
+    //Apply brightness, saturation & contrast
+    if (false) { 
+        colour += uBrightness;
+        const vec3 LumCoeff = vec3(0.2125, 0.7154, 0.0721);
+        vec3 AvgLumin = vec3(0.5, 0.5, 0.5);
+        vec3 intensity = vec3(dot(colour, LumCoeff));
+        colour = mix(intensity, colour, uSaturation);
+        colour = mix(AvgLumin, colour, uContrast);
+    }
+    if (T > 0.95) {
+        discard;
+    }
+    FragColor = vec4(colour,1.0 - T);
+
+//#define WRITE_DEPTH
+#ifdef WRITE_DEPTH
+    /* write the depth !Not supported in WebGL without extension */
+    vec4 clip_space_pos = uproject * umodelview * vec4(rayStart, 1.0);
+    float ndc_depth = clip_space_pos.z / clip_space_pos.w;
+    gl_FragDepth = (((gl_DepthRange.far - gl_DepthRange.near) * ndc_depth) +
+        gl_DepthRange.near + gl_DepthRange.far) / 2.0;
+#endif
+}
+</script>
+<script id="vsline" type="x-shader/x-vertex">
+#version 300 es
+
+layout(location=0) in vec3 position;
+layout(location=1) in vec4 color;
+
+uniform mat4 umodelview;
+uniform mat4 uproject;
+
+out vec4 vcolor;
+
+void main(void)
+{
+    gl_Position = uproject * umodelview * vec4(position, 1.0);
+    vcolor = color;
+}
+</script>
+<script id="fsline" type="x-shader/x-fragment">
+#version 300 es
+precision highp float;
+
+in  vec4 vcolor;
+out vec4 fragcolor;
+
+void main(void)
+{
+    fragcolor = vcolor;
+}
+</script>
+<style>
+    .description {
+        position: absolute;
+        z-index: 5;
+    }
+    canvas {
+        position: absolute;
+        border: 1px solid red;        
+        width: 100%;
+        height: 100%;
+    }    
+</style>
+<script src="/js/threejs/three.min.js"></script>
+<script src="/js/threejs/OrbitControls.js"></script>
+<script src="/js/lib/jszip.min.js"></script>
+<script src="/js/lib/dat.gui.min.js"></script>
+</head>
+<body>
+    <div>
+        <canvas id="demo"></canvas>
+    </div>
+    <div class="description">
+        <p><a href="https://github.com/OKaluza/sharevol">Lightweight
+         volume slicing and rendering in webGL</a> portable to threejs with texture3D
+         <br>
+         <a href="https://www.khronos.org/opengl/wiki/Compute_eye_space_from_window_space">
+             Compute eye space from window space</a><br>
+         <a href="https://mynameismjp.wordpress.com/2010/09/05/position-from-depth-3/">
+             Position from depth 3: back in the habit</a><br>
+         <a href="https://nbertoa.wordpress.com/2017/01/09/how-can-i-find-the-pixel-space-coordinates-of-a-3d-point-part-1/">
+             how can i find the pixel space coordinates of a 3d point part 1</a><br>
+         <a href="https://almarklein.org/volume_rendering.html">
+            Volume rendering in Vispy</a><br>
+        </p>
+    </div>
+    <script>
+        
+        let canvas = document.getElementById('demo');
+        let ctx = canvas.getContext( 'webgl2', { antialias: true } )
+        if( ctx == null ) { alert( 'requires webgl2 support!' ) }
+        
+        let scene = new THREE.Scene();
+        let renderer = new THREE.WebGLRenderer({canvas:canvas, context:ctx, antialias:true});
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        //renderer.setClearColor(new THREE.Color(0xffffffff));
+        renderer.setViewport(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+        let aspectRatio = 
+            //window.innerWidth / window.innerHeight;
+            canvas.clientWidth / canvas.clientHeight;
+        let camera = new THREE.PerspectiveCamera(45, 
+                aspectRatio,
+                1, 10000);
+            camera.position.z = 5;
+        let cameraHelper = new THREE.CameraHelper(camera);
+        // cameraHelper.matrixAutoUpdate = true;
+        // scene.add(cameraHelper);
+
+        let light = new THREE.DirectionalLight(0xff0000, 0.5);
+        light.position.set(100, 100, 200);
+        scene.add(light);
+
+        let m;
+        let m2, 
+            depthStep = 1 / (109 * 3), 
+            planeWidth = 256,
+            planeHeight = 256,
+            m3,m4;
+        let volmesh;
+        let volume={
+                xmin:0,
+                ymin:0,
+                zmin:0,
+                xmax:1,
+                ymax:1,
+                zmax:1,
+                brightness: 0.0,
+                contrast: 1.0,
+                saturation: 1.0,
+                power: 1.5,
+                samples: 128,
+                density: 3.0,
+                isovalue: 0.0,
+                isocolor: [288, 188, 86, 1],
+                isosmooth: 1.0,
+                isowalls: true,
+                minclip:0.0,
+                maxclip:1.0,
+                resx: 256,
+                resy: 256,
+                resz: 109,
+                lposx: 0.5,
+                lposy: 0.5,
+                lposz: 5.0,
+                lambient: 0.2,
+                ldiffuse: 0.8,
+                ldiffcolor:[255,255,255, 1],
+                lambcolor:[20,20,20,1]
+            },
+            gui = new dat.GUI({autoPlace:false});
+        gui.domElement.style.zIndex = 20;
+        gui.domElement.style.position = 'absolute';
+        gui.domElement.style.right = 0;
+        canvas.parentElement.appendChild(gui.domElement);
+        let f0 = gui.addFolder('Clip planes(Box-min-max)');
+        f0.add(volume, 'xmin', 0.0, 1.0, 0.01);
+        f0.add(volume, 'ymin', 0.0, 1.0, 0.01);
+        f0.add(volume, 'zmin', 0.0, 1.0, 0.01);
+        f0.add(volume, 'xmax', 0.0, 1.0, 0.01);
+        f0.add(volume, 'ymax', 0.0, 1.0, 0.01);
+        f0.add(volume, 'zmax', 0.0, 1.0, 0.01);
+        f0.add(volume, 'minclip', 0.0, 1.0, 0.01);
+        f0.add(volume, 'maxclip', 0.0, 1.0, 0.01);
+        gui.add(volume, 'brightness', -1.0, 1.0, 0.05);
+        gui.add(volume, 'contrast', 0.0, 2.0, 0.05);
+        gui.add(volume, 'saturation', 0.0, 2.0, 0.05);
+        gui.add(volume, 'power', 0.0, 5.0, 0.05);
+        gui.add(volume, 'samples', 32, 1024, 1);
+        gui.add(volume, 'density', 0.0, 50.0, 1.0);
+        let f1 = gui.addFolder('IsoSurface');
+        f1.add(volume, 'isovalue', 0.0, 1.0, 0.01);
+        f1.addColor(volume, 'isocolor');
+        f1.add(volume, 'isosmooth', 0.1, 3.0, 0.1);
+        f1.add(volume, 'isowalls', 0.0, 1.0, 0.01);
+        let f2 = gui.addFolder('Light');
+        f2.add(volume, 'lposx', -10.0, 10.0, 0.1);
+        f2.add(volume, 'lposy', -10.0, 10.0, 0.1);
+        f2.add(volume, 'lposz', -10.0, 10.0, 0.1);
+        //f2.add(volume, 'lambient', 0.0, 1.0, 0.1);
+        f2.add(volume, 'ldiffuse', 0.0, 1.0, 0.1);
+        f2.addColor(volume, 'ldiffcolor');
+        f2.addColor(volume, 'lambcolor');
+        
+
+        let orbitControl = new THREE.OrbitControls(camera
+                , renderer.domElement
+                );
+        orbitControl.maxPolarAngle = Math.PI * 2;
+        orbitControl.target.set(0, 0, 0);
+        orbitControl.update();
+
+        let axesHelper = new THREE.AxesHelper(500);
+        scene.add(axesHelper);
+        
+        function loadRaw() {
+            (new Promise((resolve, reject)=>{
+                let xhr = new XMLHttpRequest();
+                xhr.open('GET', './volume/head256x256x109.zip', true);
+                xhr.responseType = 'blob';
+                xhr.onloadend = function() {
+                    let fr = new FileReader();
+                    fr.onload = function() {
+                        console.log(fr);
+                        let len = fr.result.byteLength;
+                        let buffer = new Uint8Array(fr.result, 0, len);
+                        resolve({buffer, len});
+                    }
+                    fr.readAsArrayBuffer(xhr.response);
+                }
+                xhr.send();
+            })).then((data)=>{
+                return JSZip.loadAsync(data.buffer)
+            }).then(zip=>{
+                let file = zip.files['head256x256x109'];
+                return file._data.compressedContent;
+            }).then(buffer=>{            
+                let texture = new THREE.DataTexture3D(buffer, volume.resx, volume.resy, volume.resz);
+                texture.format = THREE.RedFormat;
+                texture.type = THREE.UnsignedByteType;
+                //texture.type = THREE.FloatType;
+                texture.minFilter = texture.magFilter = THREE.LinearFilter;
+                texture.unpackAlignment = 1;
+                texture.needsUpdate = true;
+
+                let materialVolume = new THREE.RawShaderMaterial({
+                    uniforms: {
+                        uvolume:{value:texture},
+                        umodelview:{value:new THREE.Matrix4()},
+                        uproject:{value:new THREE.Matrix4()},
+                        uinvproject:{value:new THREE.Matrix4()},
+                        unormal:{value:new THREE.Matrix3()},
+
+                        uBBMin:{value:new THREE.Vector3(0,0,0)},
+                        uBBMax:{value:new THREE.Vector3(1,1,1)},
+                        uResolution:{value:new THREE.Vector3(volume.resx, volume.resy, volume.resz)},
+                        uBrightness:{value:-0.11780890196982163},
+                        uContrast:{value: 1},
+                        uSaturation:{value:1.0},
+                        uPower:{value:5},
+                        uViewport:{value:new THREE.Vector4(0, 0, 
+                                //canvas.clientWidth, canvas.clientHeight
+                                volume.resx, volume.resy
+                                )},
+                        uSamples:{value:256},
+                        uDensityFactor:{value:3},
+                        uIsoValue:{value:0.45},
+                        uIsoColour:{value:new THREE.Vector4(1.0, 1.0, 0.0, 1.0)},
+                        uIsoSmooth:{value:0.5045783843331688},
+                        uIsoWalls:{value:true},
+                        uRange:{value:new THREE.Vector2(0.0, 1.0)},
+                        uDenMinMax:{value:new THREE.Vector2(0.0, 1.0)},
+
+                        uLightPos:{value:new THREE.Vector3(0.5, 0.5, 5.0)},
+                        uAmbient:{value:0.2},
+                        uDiffuse:{value:0.8},
+                        uDiffColor:{value:new THREE.Vector4(1.0, 0.0, 0.0, 1.0)},
+                        uAmbColor:{value:new THREE.Vector4(1.0, 0.0, 0.0, 1.0)}
+                    },
+                    vertexShader: document.getElementById('vs').textContent.trim(),
+                    fragmentShader: document.getElementById('fs').textContent.trim(),
+                    side: THREE.DoubleSide,
+                    //transparent: true,
+                    //opacity: 0.5,
+                    depthTest: true,
+                    depthWrite: true, 
+                });
+                let materialCube = new THREE.RawShaderMaterial({
+                    uniforms: {
+                        umodelview: {value:new THREE.Matrix4()},
+                        uproject: {value:new THREE.Matrix4()}
+                    },
+                    vertexShader: document.getElementById('vsline').textContent.trim(),
+                    fragmentShader: document.getElementById('fsline').textContent.trim(),
+                    side: THREE.DoubleSide,
+                    //transparent: true,
+                    //opacity: 0.5
+                });
+                let materialLine = new THREE.RawShaderMaterial({
+                    uniforms: {
+                        umodelview: {value:new THREE.Matrix4()},
+                        uproject: {value:new THREE.Matrix4()}
+                    },
+                    vertexShader: document.getElementById('vsline').textContent.trim(),
+                    fragmentShader: document.getElementById('fsline').textContent.trim(),
+                    side: THREE.DoubleSide,
+                    //transparent: true,
+                    //opacity: 0.5
+                });
+                        let vertexArray = new Float32Array([
+                            // front
+                            -1.0, -1.0,  1.0,  
+                             1.0, -1.0,  1.0,
+                             1.0,  1.0,  1.0,
+                            -1.0,  1.0,  1.0,
+                            // back
+                            -1.0, -1.0, -1.0,
+                             1.0, -1.0, -1.0,
+                             1.0,  1.0, -1.0,
+                            -1.0,  1.0, -1.0
+                        ]);
+                        let colorArray = new Float32Array([
+                            // front
+                            1.0, 0.0, 0.0, 1.0,
+                            0.0, 1.0, 0.0, 1.0,
+                            0.0, 0.0, 1.0, 1.0,
+                            1.0, 0.0, 1.0, 1.0,
+                            // back
+                            1.0, 0.0, 0.0, 1.0,
+                            0.0, 1.0, 0.0, 1.0,
+                            0.0, 0.0, 1.0, 1.0,
+                            1.0, 0.0, 1.0, 1.0
+
+                        ]);
+                        let indexArray = new Uint8Array([
+                            // front
+                            0, 1, 2,
+                            2, 3, 0,
+                            // right
+                            1, 5, 6,
+                            6, 2, 1,
+                            // back
+                            7, 6, 5,
+                            5, 4, 7,
+                            // left
+                            4, 0, 3,
+                            3, 7, 4,
+                            // bottom
+                            4, 5, 1,
+                            1, 0, 4,
+                            // top
+                            3, 2, 6,
+                            6, 7, 3
+                        ]); 
+                        //vertexArray.map((e,i,a)=>a[i]=e*128.0);
+                        //vertexArray.map((e,i,a)=>a[i]=e*0.5);
+                let gCube = new THREE.BoxBufferGeometry(2,2,2);
+                    //new THREE.BufferGeometry();
+                gCube.addAttribute('position', new THREE.BufferAttribute(vertexArray, 3));
+                gCube.setIndex(new THREE.BufferAttribute(indexArray, 1));
+                if (true) {
+                    m = new THREE.Mesh( gCube, materialVolume);
+                    m.name = 'planeVolume';
+                    //m.translateX(-3);
+                    m.position.set(0,0,0);
+                    m.geometry.computeBoundingBox();
+                    m.updateMatrix();
+                    m.ok = true;
+                    scene.add(m);
+                    if (true) {
+                        let gLine = new THREE.BufferGeometry();
+                        gLine.addAttribute('position', new THREE.BufferAttribute(vertexArray, 3));
+                        gLine.addAttribute('color', new THREE.BufferAttribute(colorArray, 4));
+                        m4 = new THREE.Line(gLine, 
+                                new THREE.LineBasicMaterial({vertexColors:THREE.VertexColors})
+                                //materialLine
+                                );
+                        m4.position.set(0, 0, 0);
+                        m4.updateMatrix();
+                        m4.ok = true;
+                        scene.add(m4);
+                    }
+                }
+            });
+        }
+        function updateUniforms() {
+
+            if (m && m.ok) {
+                let u = m.material.uniforms;
+                u.umodelview.value = m.modelViewMatrix;
+                //u.umodelview.value = camera.matrixWorldInverse;
+                u.uproject.value = camera.projectionMatrix;
+                u.unormal.value = m.normalMatrix;
+                u.uinvproject.value = camera.projectionMatrixInverse;
+                
+                u.uBBMin.value = new THREE.Vector3(volume.xmin, volume.ymin, volume.zmin);
+                u.uBBMax.value = new THREE.Vector3(volume.xmax, volume.ymax, volume.zmax);
+                u.uDenMinMax.value = new THREE.Vector2(volume.minclip, volume.maxclip);
+                u.uPower.value = volume.power;
+                u.uDensityFactor.value = volume.density;
+                u.uSamples.value = volume.samples;
+                u.uBrightness.value = volume.brightness;
+                u.uContrast.value = volume.contrast;
+                u.uSaturation.value = volume.saturation;
+                
+                u.uIsoValue.value = volume.isovalue;
+                u.uIsoColour.value = new THREE.Vector4(
+                        volume.isocolor[0] / 255.0,
+                        volume.isocolor[1] / 255.0,
+                        volume.isocolor[2] / 255.0,
+                        volume.isocolor[3]);
+                u.uIsoSmooth.value = volume.isosmooth;
+                u.uIsoWalls.value = volume.isowalls;
+
+                u.uLightPos.value = new THREE.Vector3(volume.lposx, volume.lposy, volume.lposz);
+                //u.uAmbient.value = volume.lambient;
+                u.uDiffuse.value = volume.ldiffuse;
+                u.uDiffColor.value = new THREE.Vector4(
+                        volume.ldiffcolor[0] / 255.0,
+                        volume.ldiffcolor[1] / 255.0,
+                        volume.ldiffcolor[2] / 255.0,
+                        volume.ldiffcolor[3]);
+                u.uAmbColor.value = new THREE.Vector4(
+                        volume.lambcolor[0] / 255.0,
+                        volume.lambcolor[1] / 255.0,
+                        volume.lambcolor[2] / 255.0,
+                        volume.lambcolor[3]);
+                m.rotation.x += 0.01;
+                m.rotation.y += 0.01;
+            }
+            if (m4 && m4.ok) {
+                let u = m4.material.uniforms;
+                u.umodelview.value = m4.modelViewMatrix;
+                u.uproject.value = camera.projectionMatrix;
+
+                m4.rotation.x += 0.01;
+                m4.rotation.y += 0.01;
+            }
+        }
+        function updateFrame() {
+            requestAnimationFrame(updateFrame);
+
+            renderer.render(scene, camera);
+
+            updateUniforms();
+        }
+        updateFrame();
+        loadRaw();
+    </script>        
+</body>
+</html>

@@ -83,6 +83,8 @@ let staticOption = {
         res.set('x-timestamp', Date.now())
     }
 }
+express.static.mime.types['wasm'] = 'application/wasm';
+express.static.mime.define({'application/wasm':['wasm']});
 
 let uploadFile = multer({
     //dest: 'upload-single/'
@@ -120,6 +122,7 @@ app.post('/uploadfiles', uploadFile.array('logos',2), (req, res, next)=>{
 });
 
 app.use(express.static('static', staticOption));
+
 app.use('/blog', entryBlog);
 app.use('/admin', entryAdmin);
 app.use('/api', entryApi);

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>point, eye space from window space</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        div {
+            box-sizing: border-box;
+            border: 1px solid;
+        }
+        #appLeftTop {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 50%;
+            height: 50%;
+            overflow: hidden;
+        }
+        #appRightTop {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 50%;
+            height: 50%;
+            overflow: hidden;
+        }
+        #appLeftBottom {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 50%;
+            height: 50%;
+            overflow: hidden;
+        }
+        #appRightBottom {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 50%;
+            height: 50%;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="/js/threejs/three.min.js"></script>
+    <script src="/js/threejs/OrbitControls.js"></script>
+    <div id="appLeftTop"></div>
+    <div id="appRightTop"></div>
+    <div id="appLeftBottom"></div>
+    <div id="appRightBottom"></div>
+    <script>
+        const fetchDepthShader = {
+            uniforms: {
+                "halfSizeNearPlane": { value: new THREE.Vector2(1, 1) },
+                "matProj": { value: new THREE.Vector2(0, 0) },
+                "depthRange": { value: 1.0 },
+                "depthMap": { value: null },
+            },
+            vertexShader: `
+                #version 300 es
+                // half the size of the near plane{ tan(fovy/2.0)*aspect, tan(fovy/2.0) }
+                uniform vec2 halfSizeNearPlane;
+
+                layout(location=0) in vec2 clipPos;
+                // UV for the depth buffer/screen access
+                // (0,0) in bottom left corner (1,1) in top right corner
+                layout(location=1) in vec2 texCoord;
+
+                out vec3 eyeDirection;
+                out vec2 uv;
+
+                void main( void ) 
+                {
+                    uv = texCoord;
+                    eyeDirection = vec3((2.0 * halfSizeNearPlane * texCoord) - halfSizeNearPlane, -1.0);                    
+                    gl_Position = vec4(clipPos, 0, 1);
+                }
+            `,
+            fragmentShader: `
+                #version 300 es
+                
+                in vec3 eyeDirection;
+                in vec2 uv;
+
+                uniform mat4 matProj;
+                uniform vec2 depthRange;
+                uniform sampler2D depthMap; // depth texture 
+                
+                vec4 CalcEyeFromWindow(in float windowZ, in vec3 eyeDirection) 
+                {
+                    float ndcZ = (2.0 * windowZ - depthRange.x - depthRange.y) / 
+                        (depthRange.y - depthRange.x);
+                    float eyeZ = matProj[3][2] / ((matProj[2][3] * ndcZ) - matProj[2][2]);
+                    return vec4(eyeDirection * eyeZ, 1);
+                }
+
+                void main( void ) 
+                {
+                    vec4 eyeSpace = CalcEyeFromWindow(texture(depthTex, uv), eyeDirection);
+                }
+            `
+        };
+        sphereShader = {
+            vertexShader: `
+                #version 300 es
+                in vec3 position;
+                in vec2 uv;
+                
+                out vec2 vUv;
+
+                uniform mat4 matProj;
+                uniform mat4 matMV;
+
+                void main() {
+                    vUv = uv;
+                    gl_Position = matProj * matMV * vec4(position, 1.0);
+                }
+            `
+            ,fragmentShader: `
+                #version 300 es
+                in vec2 vUv;
+                uniform samper2D map;
+                
+                void main() 
+                {
+                    gl_FragColor = texture(map, vUv);
+                }
+            `
+        }
+    </script>
+    <script>
+        class App {
+            constructor(container, width, height, fov = 70, far = 5000) {
+                // Initialize the scene
+                const scene = new THREE.Scene();
+
+                // Initialize the camera
+                const camera = new THREE.PerspectiveCamera(fov, width / height, 0.1, far);                
+                scene.add(camera);
+
+                // Initialize the renderer
+                let canvas = document.createElement("canvas");
+                let context = canvas.getContext("webgl2", { alpha: true, antialias: true});
+                const renderer = new THREE.WebGLRenderer({canvas:canvas, context:context });
+                renderer.setSize(width, height);
+                renderer.shadowMap.enabled = true;
+                renderer.setPixelRatio(window.devicePixelRatio);
+
+                this.scene = scene;
+                this.camera = camera;
+                this.renderer = renderer;
+                this.clock = new THREE.Clock();
+                new THREE.OrbitControls(camera, renderer.domElement);
+                scene.add(new THREE.AxesHelper(1000));
+                container.appendChild(renderer.domElement);
+            }
+            resize(width, height) {
+                const { camera, renderer } = this;
+                this.width = width;
+                this.height = height;
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            }
+        }
+        function addApp1Scene(scene) {
+            // light
+            scene.add(new THREE.AmbientLight(0xcccccc));
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.08);
+            directionalLight.position.set(500, 2000, 0);
+            scene.add(directionalLight);
+
+            let light = new THREE.DirectionalLight( 0xffffff );
+            light.position.set( 0, 0, 1 ).normalize();
+            scene.add( light );
+
+            light = new THREE.DirectionalLight( 0xffaaaa, 1.5 );
+            light.position.set( 0, 0, - 1 ).normalize();
+            scene.add( light );
+
+            // mesh
+            var geometry = new THREE.TorusBufferGeometry( 100, 25, 15, 30 );
+
+            var mat1 = new THREE.MeshPhongMaterial( { color: 0x555555, specular: 0xffaa00, shininess: 5 } );
+            var mat2 = new THREE.MeshPhongMaterial( { color: 0x550000, specular: 0xff2200, shininess: 5 } );
+
+            let zmesh1 = new THREE.Mesh( geometry, mat1 );
+            zmesh1.position.set( 0, 0, 100 );
+            zmesh1.scale.set( 1.5, 1.5, 1.5 );
+            scene.add( zmesh1 );
+
+            let zmesh2 = new THREE.Mesh( geometry, mat2 );
+            zmesh2.position.set( 0, 150, 100 );
+            zmesh2.scale.set( 0.75, 0.75, 0.75 );
+            scene.add( zmesh2 );
+        }
+        function addApp2Scene(scene) {
+            scene.add(new THREE.AmbientLight(0xcccccc));
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.08);
+            directionalLight.position.set(500, 2000, 0);
+            scene.add(directionalLight);
+
+            let n = 1,
+				geometry = new THREE.SphereBufferGeometry( 10, 64, 32 )
+                ,material = new THREE.MeshBasicMaterial( { 
+                    color: 0x00f0ff
+                    //,map: rttDepth.texture 
+                } )
+                ;
+                // var material = new THREE.ShaderMaterial( {
+                //     uniforms: { tDiffuse: { value: rttDepth.texture } },
+                //     vertexShader: sphereShader.vertexShader,
+                //     fragmentShader: sphereShader.fragmentShader,
+                //     depthWrite: false
+                // } );
+
+            for ( var j = 0; j < n; j ++ ) {
+
+                for ( var i = 0; i < n; i ++ ) {
+
+                    let mesh = new THREE.Mesh( geometry, material );
+
+                    mesh.position.x = ( i - ( n - 1 ) / 2 ) * 20;
+                    mesh.position.y = ( j - ( n - 1 ) / 2 ) * 20;
+                    mesh.position.z = 0;
+
+                    mesh.rotation.y = - Math.PI / 2;
+
+                    scene.add( mesh );
+                }
+            }
+        }
+        let winWidth = window.innerWidth;
+        let winHeight = window.innerHeight;
+        // initialize the render target texture
+        const rttDepth = new THREE.WebGLRenderTarget(winWidth/2, winHeight/2, {
+            minFilter: THREE.LinearFilter,
+            magFilter: THREE.NearestFilter,
+            format: THREE.RGBFormat
+        });
+        var app1 = new App(document.getElementById('appLeftTop'), winWidth/2, winHeight/2);
+        app1.scene.background = new THREE.Color(255, 255, 0);
+        app1.camera.position.set(22, 45, 920);
+        var app2 = new App(document.getElementById('appRightTop'), winWidth/2, winHeight/2);
+        app2.scene.background = new THREE.Color(255, 0, 255);
+        app2.camera.position.set(16, 9, 45);
+        addApp1Scene(app1.scene);
+        app1.renderer.setAnimationLoop(()=>{
+
+            app1.renderer.setRenderTarget(rttDepth);
+            app1.renderer.clear();
+            app1.renderer.render(app1.scene, app1.camera);
+
+            app1.renderer.setRenderTarget(null);
+            app1.renderer.render(app1.scene, app1.camera);
+        })
+        addApp2Scene(app2.scene);
+        app2.renderer.setAnimationLoop(()=>{
+            app2.renderer.render(app2.scene, app2.camera);
+        })
+    </script>
+</body>
+
+</html>

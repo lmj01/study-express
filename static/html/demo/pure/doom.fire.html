@@ -1,0 +1,168 @@
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+        <meta name="mainWindow" content="user-scalable=no">
+        
+        <script type="text/javascript">
+		    // The Easel Javascript library provides a full, hierarchical display list, 
+			// a core interaction model, and helper classes to 
+			// make working with the HTML5 Canvas element much easier.
+            //http://fabiensanglard.net/doom_fire_psx/index.html
+            var CJS_TICKER_FPS = 24;
+            var FIRE_WIDTH = 64*4;
+            var FIRE_HEIGHT = 128;
+            
+            var stage;
+            var firePal = [];
+            var firePixels = [];
+            var fireBuffer = [];
+            var container = null;
+            var color;
+            var canvas;
+            var bmp;
+			// ????????
+            // 16 x 7 -1 = 111
+            var fireRGB = [
+                0x07,0x07,0x07,0x1F,0x07,0x07,0x2F,0x0F,0x07,0x47,0x0F,0x07,0x57,0x17,0x07,0x67,
+                0x1F,0x07,0x77,0x1F,0x07,0x8F,0x27,0x07,0x9F,0x2F,0x07,0xAF,0x3F,0x07,0xBF,0x47,
+                0x07,0xC7,0x47,0x07,0xDF,0x4F,0x07,0xDF,0x57,0x07,0xDF,0x57,0x07,0xD7,0x5F,0x07,
+                0xD7,0x5F,0x07,0xD7,0x67,0x0F,0xCF,0x6F,0x0F,0xCF,0x77,0x0F,0xCF,0x7F,0x0F,0xCF,
+                0x87,0x17,0xC7,0x87,0x17,0xC7,0x8F,0x17,0xC7,0x97,0x1F,0xBF,0x9F,0x1F,0xBF,0x9F,
+                0x1F,0xBF,0xA7,0x27,0xBF,0xA7,0x27,0xBF,0xAF,0x2F,0xB7,0xAF,0x2F,0xB7,0xB7,0x2F,
+                0xB7,0xB7,0x37,0xCF,0xCF,0x6F,0xDF,0xDF,0x9F,0xEF,0xEF,0xC7,0xFF,0xFF,0xFF
+            ];
+            // ???????????(x,y)
+            function drawPixel(x, y, pixel) {
+                color.data[((FIRE_WIDTH * y) + x) * 4 + 0] = pixel.r;
+                color.data[((FIRE_WIDTH * y) + x) * 4 + 1] = pixel.g;
+                color.data[((FIRE_WIDTH * y) + x) * 4 + 2] = pixel.b;
+                color.data[((FIRE_WIDTH * y) + x) * 4 + 3] = 255;
+            }
+			// ????
+            function start() {					
+                document.body.style.backgroundColor="#000000";
+				
+                stage = new createjs.Stage("mainCanvas");
+                
+                createjs.Ticker.addEventListener("tick", tick);
+                createjs.Ticker.setFPS(CJS_TICKER_FPS);
+                
+                container = new createjs.Container();
+                // fire?????
+                for(var i = 0; i < 37; i++) {
+                    firePal[i] = {
+                        r : fireRGB[i * 3 + 0], //16 * i,
+                        g : fireRGB[i * 3 + 1], //16 * i,
+                        b : fireRGB[i * 3 + 2] //16 * i
+                    }
+                }
+                
+                stage.addChild(container);
+                // ??????
+				// ????????????
+                for(var i = 0; i < FIRE_WIDTH*FIRE_HEIGHT; i++) {
+                    firePixels[i] = 0;
+                }
+                
+                for(var i = 0; i < FIRE_WIDTH; i++) {
+                    firePixels[(FIRE_HEIGHT-1)*FIRE_WIDTH + i] = 36;
+                }
+                
+                container.scaleX = 2;
+                container.scaleY = 2;
+                
+                canvas = document.createElement("canvas");
+                bmp = new createjs.Bitmap(canvas);
+                
+                container.addChild(bmp);
+                stage.update();
+            }
+            
+            function spreadFire(pixel, curSrc, counter, srcOffset, rand, width) {
+                if(pixel != 0) {
+                    var randIdx = Math.round(Math.random() * 255.0) & 255;
+                    var tmpSrc;
+                    
+                    rand = ((rand+2) & 255);
+                    tmpSrc = (curSrc + (((counter - (randIdx & 3)) + 1) & (FIRE_WIDTH - 1)));
+                    firePixels[tmpSrc - FIRE_WIDTH] = pixel - ((randIdx & 1));
+                }
+                else {
+                    firePixels[srcOffset - FIRE_WIDTH] = 0;
+                }
+                
+                return rand;
+            }
+            
+            function doFire() {
+                var counter = 0;
+                var curSrc = 0;
+                var srcOffset = 0;
+                var rand = 0;
+                var step = 0;
+                var pixel = 0;
+                var i = 0;
+                
+                rand = Math.round(Math.random() * 255.0) & 255;
+                curSrc = FIRE_WIDTH;
+                
+                do {
+                    srcOffset = (curSrc + counter);
+                    pixel = firePixels[srcOffset];
+                    step = 2;
+                    
+                    rand = spreadFire(pixel, curSrc, counter, srcOffset, rand, FIRE_WIDTH);
+                    
+                    curSrc += FIRE_WIDTH;
+                    srcOffset += FIRE_WIDTH;
+                    
+                    do {
+                        pixel = firePixels[srcOffset];
+                        step += 2;
+                        
+                        rand = spreadFire(pixel, curSrc, counter, srcOffset, rand, FIRE_WIDTH);
+                        
+                        pixel = firePixels[srcOffset + FIRE_WIDTH];
+                        curSrc += FIRE_WIDTH;
+                        srcOffset += FIRE_WIDTH;
+                        
+                        rand = spreadFire(pixel, curSrc, counter, srcOffset, rand, FIRE_WIDTH);
+                        
+                        curSrc += FIRE_WIDTH;
+                        srcOffset += FIRE_WIDTH;
+                    
+                    } while(step < FIRE_HEIGHT);
+                    
+                    counter++;
+                    curSrc -= ((FIRE_WIDTH*FIRE_HEIGHT)-FIRE_WIDTH);
+                    
+                } while(counter < FIRE_WIDTH);
+            }
+            
+            function tick(event) {
+                doFire();
+                // ??canvas??????
+                color = canvas.getContext("2d").getImageData(0, 0, FIRE_WIDTH, FIRE_HEIGHT);
+                
+                for(var h = 0; h < FIRE_HEIGHT; h++) {
+                    for(var w = 0; w < FIRE_WIDTH; w++) {
+                        var p = firePixels[h * FIRE_WIDTH + w];
+                        drawPixel(w, h, firePal[p]);
+                    }
+                }
+                
+                canvas.getContext("2d").putImageData(color, 0, 0);
+                stage.update();
+            }
+            
+        </script>
+    </head>
+    
+    <body onload="start();">
+        <canvas id="mainCanvas" width="1024" height="768"></canvas>
+        <div>
+            <!--<div id="testdiv" style="display: none;">hello world</div>-->
+        </div>
+    </body>
+</html>

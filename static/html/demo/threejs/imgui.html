@@ -123,13 +123,14 @@ Promise.resolve().then(() => {
     ImGui.EndFrame();
     
     ImGui.Render();
-    if (false) {
+    if (true) {
         ImGui.NewFrame();
     
         ImGui.SetNextWindowPos(new ImGui.ImVec2(220, 20), ImGui.Cond.FirstUseEver);
         ImGui.SetNextWindowSize(new ImGui.ImVec2(594, 140), ImGui.Cond.FirstUseEver);
         ImGui.Begin("test for new frame");
     
+        ImGui.End();
         ImGui.EndFrame();
         ImGui.Render();
     }

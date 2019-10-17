@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script type="x-shader/x-vertex" id="vertex-shader">
+	precision highp float;
+	
+    attribute float alpha;
+	attribute vec3 position;
+	attribute vec3 color3;
+	attribute float size;
+	
+    varying float v_alpha;
+	varying float v_size;
+	varying vec3 v_color;
+	
+	uniform mat4 projectionMatrix;
+	uniform mat4 modelViewMatrix;
+	
+	void main() {
+        v_alpha = alpha;
+		v_size = size;
+		v_color = color3;
+        vec4 myPosition = modelViewMatrix * vec4(position, 1.0);
+		//gl_PointSize = v_size * (1. / -myPosition.z);
+        gl_PointSize = size;
+        gl_Position = projectionMatrix * myPosition;
+		
+    }
+</script>
+
+<script type="x-shader/x-fragment" id="fragment-shader">
+	precision highp float;
+
+	uniform vec3 color;
+
+	varying float v_alpha;
+	varying vec3 v_color;
+	
+    void main() {
+		//gl_FragColor = vec4(color, v_alpha);
+		gl_FragColor = vec4(v_color, v_alpha);
+    }
+
+</script>
+<style>
+	body {
+		margin:0;
+		overflow:hidden;
+	}  
+</style>
+<script src="/js/threejs/three.min.js"></script>
+<script src="/js/threejs/OrbitControls.js"></script>
+</head>
+<body>
+
+    <script>
+		//All numeric values use SI units.
+        class App {
+			constructor() {
+				//this.gravity = -9.81;
+				this.index = 0;
+				this.count = 1000;
+				this.height = 0;
+				this.max_pos_dist_xz = 20;
+				this.max_neg_dist_xz = this.max_pos_dist_xz / 2;
+				this.dt = 1 / 60;
+				this.particle_emitted = [];
+				this.particle_velocities = [];
+				this.particle_has_bounced = [];
+				this.particle_life = 20;
+				this.uniforms = {
+					color: { value: new THREE.Color(0xff0000)},
+				};
+				this.alphas = new Float32Array(this.count * 1);				
+				this.particle_geometry = new THREE.BufferGeometry();
+				
+				let scene = new THREE.Scene();
+				this.scene = scene;
+				
+				let camera = new THREE.PerspectiveCamera(70, 
+					window.innerWidth /	window.innerHeight, 0.01, 1e6);
+				camera.position.set(100, 500, 100);
+				
+				let renderer = new THREE.WebGLRenderer({antialias: true});
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				document.body.appendChild(renderer.domElement);
+
+				let controls = new THREE.OrbitControls(camera, renderer.domElement);
+				controls.update();
+
+				this.init();
+				renderer.setAnimationLoop(()=>{
+					controls.update();
+					this.update();
+					renderer.render(scene, camera);
+				});				
+			}
+
+			init() {
+				const {scene} = this;
+
+				//Positions as [x,y,z,x,y,z, ...]
+				let positions = [];
+				let colors = [];
+				let size = 2.0;
+				let sizes = [];
+				
+				function rcolor() {
+					return Math.random() * 255;
+				}
+
+				for(var i = 0; i < this.count; i++)
+				{
+					sizes.push(size+i/100);
+					positions.push(0.0, 0.0, 0.0);
+					colors.push(rcolor(), rcolor(), rcolor());
+					this.alphas[i] = 1.0;
+					this.particle_emitted.push(false);
+				}
+
+				let colorAttribute = new THREE.Uint8BufferAttribute(colors, 3);
+				colorAttribute.normalized = true;
+
+				this.particle_geometry.addAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+				this.particle_geometry.addAttribute('color3', colorAttribute);
+				this.particle_geometry.addAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+				this.particle_geometry.addAttribute( 'alpha', new THREE.BufferAttribute(this.alphas, 1));
+
+				let particle_material = new THREE.RawShaderMaterial({
+					uniforms: this.uniforms,
+					vertexShader: document.getElementById( 'vertex-shader' ).textContent,
+					fragmentShader: document.getElementById( 'fragment-shader' ).textContent,
+					transparent: true
+				});
+
+				this.particle_system = new THREE.Points(this.particle_geometry, particle_material);				
+				this.particle_system.sortParticles = true;
+				scene.add(this.particle_system);
+
+				let particle_ground = new THREE.Mesh(
+					new THREE.PlaneGeometry(200, 200, 0), 
+					new THREE.MeshBasicMaterial());				
+				particle_ground.position.y = 0;
+				particle_ground.rotation.x = -Math.PI / 2;
+				scene.add(particle_ground);
+				
+				
+			}
+
+			update() {				
+				//Set the particle xy position
+				if(this.index < this.count)
+				{	
+					if(this.max_pos_dist_xz > 0)
+					{
+						this.max_neg_dist_xz = this.max_pos_dist_xz / 2;
+					}
+					
+					this.particle_geometry.attributes.position.setXYZ(
+						this.index, 
+						Math.random() * this.max_pos_dist_xz - this.max_neg_dist_xz, 
+						this.height, 
+						Math.random() * this.max_pos_dist_xz - this.max_neg_dist_xz);
+					++this.index;
+					++this.height;
+					this.particle_emitted[this.index] = true;
+				}
+				
+				var alphas = this.particle_system.geometry.attributes.alpha;
+				
+				for(var i = 0; i < this.count; i++)
+				{		
+					if(this.particle_emitted[i])
+					{
+						if(alphas.array[i] > 0)
+						{
+							alphas.array[i] -= this.dt / this.particle_life;
+						}else
+						{
+							alphas.array[i] = 0;
+						}
+					}
+					
+					//IMPORTANT
+					alphas.needsUpdate = true;
+					this.particle_geometry.colorsNeedUpdate = true;
+				}
+				
+				//IMPORTANT
+				this.particle_geometry.attributes.position.needsUpdate = true;				
+			}
+		}
+		new App();
+    </script>        
+</body>
+</html>
