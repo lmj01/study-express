@@ -1,0 +1,8 @@
+// psd图片尺寸转rem
+@function px2rem($px) {
+    @return $px * 750 / $designWidth / 20 + rem;
+}
+// use demo
+// @import 'psd2rem.scss';
+// @designWidth: 750; // 设计图是750
+// .banner { width: px2rem(300) } // banner是300px

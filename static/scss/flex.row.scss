@@ -1,0 +1,96 @@
+$gap: 15px;
+$width: 100%;
+$col: 12;
+$sm: 576px;
+$md: 768px;
+$lg: 992px;
+$xl: 1200px;
+.flexbox {
+	display: flex;
+	flex-wrap: wrap;
+	margin-left: 0;
+	margin-right: 0;
+}
+.flex,.flex-1,.flex-2,.flex-3,.flex-4,.flex-5,.flex-6,.flex-7,.flex-8,.flex-9,.flex-10,.flex-11,.flex-12,
+.flex-sm,.flex-sm-1,.flex-sm-2,.flex-sm-3,.flex-sm-4,.flex-sm-5,.flex-sm-6,.flex-sm-7,.flex-sm-8,.flex-sm-9,.flex-sm-10,.flex-sm-11,.flex-sm-12,
+.flex-md,.flex-md-1,.flex-md-2,.flex-md-3,.flex-md-4,.flex-md-5,.flex-md-6,.flex-md-7,.flex-md-8,.flex-md-9,.flex-md-10,.flex-md-11,.flex-md-12,
+.flex-lg,.flex-lg-1,.flex-lg-2,.flex-lg-3,.flex-lg-4,.flex-lg-5,.flex-lg-6,.flex-lg-7,.flex-lg-8,.flex-lg-9,.flex-lg-10,.flex-lg-11,.flex-lg-12,
+.flex-xl,.flex-xl-1,.flex-xl-2,.flex-xl-3,.flex-xl-4,.flex-xl-5,.flex-xl-6,.flex-xl-7,.flex-xl-8,.flex-xl-9,.flex-xl-10,.flex-xl-11,.flex-xl-12 {
+	padding-left: 0;
+	padding-right: 0;
+	flex: 0 0 100%;
+}
+.flex {
+	flex: 1 0 auto;
+	padding-left: $gap;
+	padding-right: $gap;
+}
+@for $i from 1 through $col {
+	.flex-#{$i}{
+		flex: 0 0 $width / $i;
+		padding-left: $gap;
+		padding-right: $gap;
+	}
+}
+@media(min-width: $sm){
+	.flexbox {
+		display: flex;
+		flex-wrap: wrap;
+		margin-left: -$gap;
+		margin-right: -$gap;
+	}	
+	.flex-sm {
+		flex: 1 0 auto;
+		padding-left: $gap;
+		padding-right: $gap;
+	}
+	@for $i from 1 through $col {
+		.flex-sm-#{$i}{
+			flex: 0 0 $width / $i;
+			padding-left: $gap;
+			padding-right: $gap;
+		}
+	}
+}
+@media(min-width: $md){
+	.flex-md {
+		flex: 1 0 auto;
+		padding-left: $gap;
+		padding-right: $gap;
+	}
+	@for $i from 1 through $col {
+		.flex-md-#{$i}{
+			flex: 0 0 $width / $i;
+			padding-left: $gap;
+			padding-right: $gap;
+		}
+	}
+}
+@media(min-width: $lg){
+	.flex-lg {
+		flex: 1 0 auto;
+		padding-left: $gap;
+		padding-right: $gap;
+	}
+	@for $i from 1 through $col {
+		.flex-lg-#{$i}{
+			flex: 0 0 $width / $i;
+			padding-left: $gap;
+			padding-right: $gap;	
+		}
+	}
+}
+@media(min-width: $xl){
+	.flex-xl {
+		flex: 1 0 auto;
+		padding-left: $gap;
+		padding-right: $gap;
+	}
+	@for $i from 1 through $col {
+		.flex-xl-#{$i}{
+			flex: 0 0 $width / $i;
+			padding-left: $gap;
+			padding-right: $gap;
+		}
+	}
+}

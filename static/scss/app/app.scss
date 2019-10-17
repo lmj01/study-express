@@ -1,0 +1,40 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html {
+    font-size: 1rem;
+}
+body {
+    font-family: 'STHeiti', 'Microsoft YaHei', Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    line-height: 1;
+    overflow-x: hidden;
+    background-color: lightblue;
+}
+
+@media screen and (min-width:1001px) {
+    .container {
+        width: 60%;
+        margin: auto;
+    }    
+    @import './menu.pc.scss';
+}
+@media screen and (max-width:1000px) {
+    .container {
+        width: 98%;
+        margin: auto;
+    }    
+    @import './menu.mobile.scss';
+}
+
+@import './secction.scss';
+
+.p1 {
+    font-size: 1rem;
+}
+.p2 {
+    font-size: 2rem;
+}

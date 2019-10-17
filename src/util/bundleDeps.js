@@ -34,15 +34,10 @@ let cssOptions = {
 }
 let root = __dirname + "/../../";
 createFolder(root+'static/css');
-bundlecss(root+'static/css/index.min.css', [
-    root+'static/css-tmp/index.css'
-], cssOptions);
-bundlecss(root+'static/css/register.min.css', [
-    root+'static/css-tmp/register.css'
-], cssOptions);
-bundlecss(root+'static/css/upload.min.css', [
-    root+'static/css-tmp/upload.css'
-], cssOptions);
+bundlecss(root+'static/css/index.min.css', [root+'static/css-tmp/index.css'], cssOptions);
+bundlecss(root+'static/css/register.min.css', [root+'static/css-tmp/register.css'], cssOptions);
+bundlecss(root+'static/css/upload.min.css', [root+'static/css-tmp/upload.css'], cssOptions);
+bundlecss(root+'static/css/flex.row.min.css', [root+'static/css-tmp/flex.row.css'], cssOptions);
 
 let jsOptions = {
     // mangle: {
@@ -51,15 +46,11 @@ let jsOptions = {
     compress: false,
     mangle: false
 }
-bundlejs(root+'static/js/http.min.js', [
-    root+'src/frontend/http.js'
-], jsOptions);
-bundlejs(root+'static/js/netspeed.min.js', [
-    root+'src/frontend/netspeed.js'
-], jsOptions);
-bundlejs(root+'static/js/device.info.min.js', [
-    root+'src/frontend/device.info.js'
-], jsOptions);
+bundlejs(root+'static/js/http.min.js', [root+'src/frontend/http.js'], jsOptions);
+bundlejs(root+'static/js/netspeed.min.js', [root+'src/frontend/netspeed.js'], jsOptions);
+bundlejs(root+'static/js/remlayout.min.js', [root+'src/frontend/remlayout.js'], jsOptions);
+bundlejs(root+'static/js/meta.min.js', [root+'src/frontend/meta.js'], jsOptions);
+bundlejs(root+'static/js/device.info.min.js', [root+'src/frontend/device.info.js'], jsOptions);
 bundlejs(root+'static/js/register.min.js', [
     root+'src/frontend/http.js',
     root+'src/frontend/register.js'

@@ -34,6 +34,8 @@ try {
     render('static/scss/index.scss', 'static/css-tmp/index.css');
     render('static/scss/register.scss', 'static/css-tmp/register.css');
     render('static/scss/upload.scss', 'static/css-tmp/upload.css');
+    render('static/scss/flex.row.scss', 'static/css-tmp/flex.row.css');
+    render('static/scss/app/app.scss', 'static/css/app.min.css');
 } catch(err) {
     console.log('node-sass parser css', err);
 }

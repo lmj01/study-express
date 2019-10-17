@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+    <meta charset="utf-8">
+    <meta http-equiv="pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+    <meta http-equiv="expires" content="0">
+    <head>
+        <link rel="stylesheet" type="text/css" href="/css/app.min.css">
+        <link rel="stylesheet" type="text/css" href="./app/iconos/css/fontello.css">
+    </head>
+    <body>
+        <header>
+            <div>
+                <img src="./app/logo.png">
+                <h1>My Title</h1>
+                <input type="checkbox" id="menu-mobile">
+                <label class="icon-menu" for="menu-mobile"></label>
+                <nav>
+                    <a href="#1">title 1</a>
+                    <a href="#2">title 2</a>
+                    <a href="#3">title 3</a>
+                </nav>
+            </div>
+        </header>
+        <main>
+            <section class="section-one">
+                <div class="container">
+                    <h2>main h2</h2>
+                    <p>main section part</p>
+                </div>
+            </section>
+        </main>
+        <section class="section-two">
+            <div class="container">
+                <h2>section 1</h2>
+                <p>section part 1</p>
+            </div>
+        </section>
+        <section class="section-three">
+            <div class="container">
+                <p class="p1">这是1rem字体</p>
+                <p class="p2">这是2rem字体</p>  
+                <pre id="info"></pre>   
+            </div>
+        </section>   
+        <script src="/js/meta.min.js"></script>
+        <script>
+            let info = document.getElementById('info');
+            let a = true;
+            info.textContent = 'sss';
+            window.screen.orientation.addEventListener('change', (e)=>{
+                a = !a;
+                info.textContent = `change is ${a}`;
+                console.log(e, a);
+                window.location.reload();
+            }, false);
+        </script>
+    </body>
+</html>

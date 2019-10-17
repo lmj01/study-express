@@ -1,6 +1,5 @@
-# JavaScript
 
-## 获取图片信息
+# 获取图片信息
 ```javascript
 let img = new Image();
 img.onload = function() {
