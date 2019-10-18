@@ -12,46 +12,16 @@
     <body>
         <h1>hello wasm example</h1>        
         <script type="module">
-            // const module = import('./wasm/wasm_hello.js');
-            // module.then(fn=>{
-            //     fn.greet('Web-Assembly 1');
-            // });   
-        </script>
-        <script type="module">
-            class WA {
-                constructor() {
+            import('./wasm/wasm_greet.js')
+            .then(module => module.default())
+            .then(res=>{
+                res.greet();                    
+            });
 
-                }
-                streaming(url, imports) {
-                    return WebAssembly.instantiateStreaming(fetch(url), imports || {});
-                }
-                instantiate(url, imports) {
-                    return fetch(url).then(res=>{
-                        if (res.ok) {
-                            console.log('arraybuffer ', res.arrayBuffer);
-                            return res.arrayBuffer();                        
-                        }
-                        throw new Error('unable to fetch wasm');
-                    }).then(bytes=>{
-                        console.log('bytes ', bytes);
-                        return WebAssembly.compile(bytes);
-                    }).then(mod=>{
-                        console.log('instantiate module', mod);
-                        return WebAssembly.instantiate(mod, imports || {});
-                    }).then(instance=>instance.exports);
-                }
-            }
-            let importObject = {
-                imports: {
-                    imported_func: arg=> console.log(arg)
-                }
-            };
-            let wa = new WA();
-            // wa.streaming('./wasm/wasm_hello.wasm')
-            // .then(res=>console.log('streaming ',res));
-
-            wa.instantiate('./wasm/wasm_hello.wasm').then(res=>{
-                console.log(res);
+            import('./wasm/wasm_hello.js')
+            .then(module => module.default())
+            .then(res=>{
+                res.greet('web assembly!');                    
             });
         </script>
     </body>    
