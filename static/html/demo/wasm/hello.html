@@ -10,17 +10,48 @@
         </style>
     </head>
     <body>
-        <h1>hello wasm example</h1>
-        <script>
-            // const module1 = import('./wasm/wasm_hello.js');
-            // module1.then(fn=>{
+        <h1>hello wasm example</h1>        
+        <script type="module">
+            // const module = import('./wasm/wasm_hello.js');
+            // module.then(fn=>{
             //     fn.greet('Web-Assembly 1');
-            // });                  
-            WebAssembly.instantiateStreaming(fetch('./wasm/wasm_hello.wasm'))
-            .then(module=>{
-                console.log(module);
-                const res = module.instance.exports.greet;
-                res('Web-Assembly 2');
+            // });   
+        </script>
+        <script type="module">
+            class WA {
+                constructor() {
+
+                }
+                streaming(url, imports) {
+                    return WebAssembly.instantiateStreaming(fetch(url), imports || {});
+                }
+                instantiate(url, imports) {
+                    return fetch(url).then(res=>{
+                        if (res.ok) {
+                            console.log('arraybuffer ', res.arrayBuffer);
+                            return res.arrayBuffer();                        
+                        }
+                        throw new Error('unable to fetch wasm');
+                    }).then(bytes=>{
+                        console.log('bytes ', bytes);
+                        return WebAssembly.compile(bytes);
+                    }).then(mod=>{
+                        console.log('instantiate module', mod);
+                        return WebAssembly.instantiate(mod, imports || {});
+                    }).then(instance=>instance.exports);
+                }
+            }
+            let importObject = {
+                imports: {
+                    imported_func: arg=> console.log(arg)
+                }
+            };
+            let wa = new WA();
+            // wa.streaming('./wasm/wasm_hello.wasm')
+            // .then(res=>console.log('streaming ',res));
+
+            wa.instantiate('./wasm/wasm_hello.wasm').then(res=>{
+                console.log(res);
             });
         </script>
     </body>    

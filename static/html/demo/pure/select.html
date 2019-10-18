@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+        <title>select</title>
+        <link rel="stylesheet" href="/css/register.min.css">
+        <script src="/js/vue.min.js"></script>
+        <style>
+            .content {
+                width: 200px;
+                height: 40px;
+                margin: 0 auto;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                background-color: lightgreen;
+            }
+            .content label {
+                margin: auto;
+                display: inline-block;
+            }
+            .content select {
+                display: inline-block;
+            }
+            .custom-select {
+                position: relative;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>select too much</h1>
+        <div id="app">
+            <div class="content">
+                <label for="dd-select">select much data</label>
+                <select id="dd-select" @click="trigger">
+                    <option>--Please choose an option--</option>
+                    <option v-for="v in value" :value='v.val'>{{v.val}}</option>
+                </select>
+                <com-select ref='select'></com-select>
+            </div>
+        </div>        
+        <script>
+            let vm = new Vue({
+                components: {
+                    "com-select": {
+                        template:
+                        `<div class="custom-select">
+                           <div></div>
+                           <div></div> 
+                        </div>`
+                        ,data: function() {
+                            return {
+                                value: []
+                            }
+                        }
+                        ,methods: {
+                            init: function(data) {
+                                this.value = data;
+                            }
+                        }
+                    }
+                }
+                ,el:'#app',
+                data: {
+                    value: []
+                },
+                created: function() {
+                    this.reset(200);
+                },
+                methods: {
+                    reset: function(count) {
+                        this.value = [];
+                        for (let i=0; i<count;i++) {
+                            this.value.push({val:(i+1)});
+                        }
+                        this.$forceUpdate();
+                    },
+                    trigger: function(e) {
+                        let target = e.target;
+                        let count = target.childElementCount;
+                        if (count > 10) {
+                            for (let i=count-1; i>0;i--) {
+                                target.removeChild(target.children[i]);
+                            }
+                        }
+                        console.log('trigger', e, target.children);
+                    }
+                }
+            });
+        </script>
+    </body>    
+</html>

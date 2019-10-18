@@ -5,6 +5,7 @@ const expressWinston = require('express-winston');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const expressSession = require('express-session');
+const mysqlStore = require('express-mysql-session')(expressSession);
 
 let config = require('./config/config');
 let pathRegister = require('./src/backend/register');
@@ -25,6 +26,22 @@ let entryApi = require('./src/entry/api');
 const app = express();
 
 mysql.begin(config.mysql, 2);
+
+let sessionStore = new mysqlStore({
+    host: config.mysql.host,
+    port: config.mysql.port,
+    user: config.mysql.user,
+    password: config.mysql.password,
+    database: config.mysql.database,
+    schema: config.sessionSchema
+});
+app.use(expressSession({
+    key: 'session_cookie_name',
+    secret: 'session_cookie_secret',
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false
+}));
 
 app.use(expressWinston.logger({
     transports: [
@@ -83,7 +100,7 @@ let staticOption = {
         res.set('x-timestamp', Date.now())
     }
 }
-express.static.mime.types['wasm'] = 'application/wasm';
+//express.static.mime.types['wasm'] = 'application/wasm';
 express.static.mime.define({'application/wasm':['wasm']});
 
 let uploadFile = multer({
