@@ -35,13 +35,13 @@ let sessionStore = new mysqlStore({
     database: config.mysql.database,
     schema: config.sessionSchema
 });
-app.use(expressSession({
-    key: 'session_cookie_name',
-    secret: 'session_cookie_secret',
-    store: sessionStore,
-    resave: false,
-    saveUninitialized: false
-}));
+// app.use(expressSession({
+//     key: 'session_cookie_name',
+//     secret: 'session_cookie_secret',
+//     store: sessionStore,
+//     resave: false,
+//     saveUninitialized: false
+// }));
 
 app.use(expressWinston.logger({
     transports: [
