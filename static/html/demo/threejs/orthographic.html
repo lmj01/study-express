@@ -1,0 +1,182 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+    <title>orthographic camera </title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style type="text/css">
+        body {
+            position: relative;
+            background: #000;
+            color: #999;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            font-family: georgia;
+            font-size: 1em;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script src="/js/threejs/three.min.js"></script>
+    <script src="/js/threejs/OrbitControls.js"></script>
+    <script src="/js/threejs/OrthographicTrackballControls.js"></script>
+    <script>
+        var SCREEN_WIDTH = window.innerWidth;
+        var SCREEN_HEIGHT = window.innerHeight;
+        let aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
+        var renderer, container;
+
+        var camera, scene, viewsize = 400;
+        var cameraOrtho, sceneRenderTarget;
+
+        var heigMapMaterial, normalMapMaterial, terrainMaterial,
+            heightMap, normalMap,
+            quadTarget;
+
+        var directionalLight;
+
+        var terrain;
+
+        var clock = new THREE.Clock();
+
+        var updateNoise = true;
+        var isOrthographicCamera = true;
+        var controls;
+
+        init();
+        animate();
+        function init() {
+
+            container = document.getElementById('app');
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+            container.appendChild(renderer.domElement);
+
+            // CAMERA
+            if (isOrthographicCamera) {
+                camera = new THREE.OrthographicCamera( viewsize * aspect, -viewsize*aspect, 
+                viewsize, -viewsize, 1, 10000 );        
+                camera.position.set(0, 0, -100);
+
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+                controls.rotateSpeed = 1.0;
+                controls.zoomSpeed = 1.2;
+                controls.panSpeed = 0.8;
+
+            } else {
+                camera = new THREE.PerspectiveCamera(40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 40000);
+                camera.position.set(- 1200, 800, 1200);                
+
+                controls = new THREE.OrthographicTrackballControls(camera, renderer.domElement);
+                controls.noZoom = false;
+            }
+            
+            // SCENE (FINAL)
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(
+                //0x050505
+                0xffffff
+            );
+
+            // EVENTS
+            window.addEventListener('resize', onWindowResize, false);
+
+            // LIGHTS
+            addLight();
+
+            addObjects();
+        }
+        function addLight() {
+            scene.add(new THREE.AmbientLight(0x111111));
+
+            directionalLight = new THREE.DirectionalLight(0xffffff, 1.15);
+            directionalLight.position.set(500, 2000, 0);
+            scene.add(directionalLight);
+        }
+        function addObjects() {
+
+            cameraOrtho = new THREE.OrthographicCamera(SCREEN_WIDTH / - 2, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_HEIGHT / - 2, - 10000, 10000);
+
+            scene.add(cameraOrtho);
+
+            var rx = 256, ry = 256;
+
+            heightMap = new THREE.WebGLRenderTarget(rx, ry);
+            heightMap.texture.generateMipmaps = false;
+
+            normalMap = new THREE.WebGLRenderTarget(rx, ry);
+            normalMap.texture.generateMipmaps = false;
+
+            
+            const plane = new THREE.PlaneBufferGeometry(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+            const noise = new THREE.Mesh(plane, new THREE.MeshBasicMaterial({side:THREE.DoubleSide}));
+            noise.rotation.x = -3 * Math.PI / 4;
+            scene.add(noise);
+            renderer.setRenderTarget(heightMap);
+            renderer.clear();
+            renderer.render(scene, cameraOrtho);
+            //noise.visible = false;
+
+            const noiseNormal = new THREE.Mesh(plane, normalMapMaterial);
+            noiseNormal.rotation.x = - Math.PI / 4;
+            scene.add(noiseNormal);
+            renderer.setRenderTarget(normalMap);
+            renderer.clear();
+            renderer.render(scene, cameraOrtho);
+        }
+        //
+
+        function onWindowResize() {
+
+            SCREEN_WIDTH = window.innerWidth;
+            SCREEN_HEIGHT = window.innerHeight;
+
+            renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+            camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
+            camera.updateProjectionMatrix();
+
+        }
+
+        //
+
+        function animate() {
+
+            requestAnimationFrame(animate);
+
+            render();
+            renderer.setRenderTarget(null);
+            renderer.render(scene, camera);
+
+        }
+
+        function render() {
+            var delta = clock.getDelta();
+            // if (updateNoise) {
+            //     quadTarget.material = heightMapMaterial;
+            //     renderer.setRenderTarget(heightMap);
+            //     renderer.clear();
+            //     renderer.render(sceneRenderTarget, cameraOrtho);
+            //     quadTarget.material = normalMapMaterial;
+            //     renderer.setRenderTarget(normalMap);
+            //     renderer.clear();
+            //     renderer.render(sceneRenderTarget, cameraOrtho);
+            //     updateNoise = true;
+            // }
+        }
+
+    </script>
+
+</body>
+
+</html>

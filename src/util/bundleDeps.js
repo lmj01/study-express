@@ -18,6 +18,7 @@ function copyDeps() {
     copy(root+'node_modules/three/build/three.min.js', root+'static/js/threejs/three.min.js');
     copy(root+'node_modules/three/build/three.module.js', root+'static/js/threejs/three.module.js');
     copy(root+'node_modules/three/examples/js/controls/OrbitControls.js', root+'static/js/threejs/OrbitControls.js');
+    copy(root+'node_modules/three/examples/js/controls/OrthographicTrackballControls.js', root+'static/js/threejs/OrthographicTrackballControls.js');
     copy(root+'node_modules/vue/dist/vue.min.js', root+'static/js/vue.min.js');
     copy(root+"node_modules/showdown/dist/showdown.min.js", root+"static/js/showdown.min.js");
     copy(root+"node_modules/showdown/dist/showdown.min.js.map", root+"static/js/showdown.min.js.map");
