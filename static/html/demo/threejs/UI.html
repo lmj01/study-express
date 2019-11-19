@@ -1,0 +1,336 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+    <title>ui</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style type="text/css">
+        body {
+            position: relative;
+            background: #000;
+            color: #999;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            font-family: georgia;
+            font-size: 1em;
+            text-align: center;
+        }
+        .panel {
+            position: fixed;
+            top: 50px;
+            left: 200px;
+            background-color: lightgray;
+        }        
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+    <script src="/js/threejs/three.min.js"></script>
+    <script src="/js/threejs/TrackballControls.js"></script>
+    <script>
+        var gWIDTH = window.innerWidth;
+        var gHEIGHT = window.innerHeight;
+        let gAspect = gWIDTH / gHEIGHT, target = new THREE.Vector3();
+        target.set(0, 0, 0);
+        let gSwitch = 0, tmpSwitch = 0;
+
+        THREE.Lut = function ( colormap, numberofcolors ) {
+
+            this.lut = [];
+            this.setColorMap( colormap, numberofcolors );
+            return this;
+
+            };
+
+            THREE.Lut.prototype = {
+
+            constructor: THREE.Lut,
+
+            lut: [], map: [], n: 256, minV: 0, maxV: 1,
+
+            set: function ( value ) {
+
+                if ( value instanceof THREE.Lut ) {
+
+                    this.copy( value );
+
+                }
+
+                return this;
+
+            },
+
+            setMin: function ( min ) {
+
+                this.minV = min;
+
+                return this;
+
+            },
+
+            setMax: function ( max ) {
+
+                this.maxV = max;
+
+                return this;
+
+            },
+
+            setColorMap: function ( colormap, numberofcolors ) {
+
+                this.map = [[ 0.0, 0xFF0000 ], [ 0.5, 0xFFFF00 ], [ 0.8, 0x00FF00 ], [ 1.5, 0x00FF00 ]];
+                this.n = numberofcolors || 32;
+
+                var step = 1.0 / this.n;
+
+                this.lut.length = 0;
+                for ( var i = 0; i <= 1; i += step ) {
+
+                    for ( var j = 0; j < this.map.length - 1; j ++ ) {
+                    //for ( var j = this.map.length-1; j >= 0; j--  ) {
+
+                        if ( i >= this.map[ j ][ 0 ] && i < this.map[ j + 1 ][ 0 ] ) {
+
+                            var min = this.map[ j ][ 0 ];
+                            var max = this.map[ j + 1 ][ 0 ];
+
+                            var minColor = new THREE.Color( this.map[ j ][ 1 ] );
+                            var maxColor = new THREE.Color( this.map[ j + 1 ][ 1 ] );
+
+                            //var color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
+
+                            this.lut.push( minColor );
+
+                        }
+
+                    }
+
+                }
+
+                return this;
+
+            },
+
+            copy: function ( lut ) {
+
+                this.lut = lut.lut;
+                this.map = lut.map;
+                this.n = lut.n;
+                this.minV = lut.minV;
+                this.maxV = lut.maxV;
+
+                return this;
+
+            },
+
+            getColor: function ( alpha ) {
+
+                if ( alpha <= this.minV ) {
+
+                    alpha = this.minV;
+
+                } else if ( alpha >= this.maxV ) {
+
+                    alpha = this.maxV;
+
+                }
+
+                alpha = ( alpha - this.minV ) / ( this.maxV - this.minV );
+
+                var colorPosition = Math.round( alpha * this.n );
+                colorPosition == this.n ? colorPosition -= 1 : colorPosition;
+
+                return this.lut[ colorPosition ];
+
+            },
+            
+            createCanvas: function () {
+
+                var canvas = document.createElement( 'canvas' );
+                canvas.width = 1;
+                canvas.height = this.n;
+
+                this.updateCanvas( canvas );
+
+                return canvas;
+
+            },
+
+            updateCanvas: function ( canvas ) {
+
+                var ctx = canvas.getContext( '2d', { alpha: false } );
+
+                var imageData = ctx.getImageData( 0, 0, 1, this.n );
+
+                var data = imageData.data;
+
+                var k = 0;
+
+                var step = 1.0 / this.n;
+
+                for ( var i = 1; i >= 0; i -= step ) {
+
+                    for ( var j = this.map.length - 1; j >= 0; j -- ) {
+
+                        if ( i < this.map[ j ][ 0 ] && i >= this.map[ j - 1 ][ 0 ] ) {
+
+                            var min = this.map[ j - 1 ][ 0 ];
+                            var max = this.map[ j ][ 0 ];
+
+                            var minColor = new THREE.Color( this.map[ j - 1 ][ 1 ] );
+                            var maxColor = new THREE.Color( this.map[ j ][ 1 ] );
+
+                            //var color = minColor.lerp( maxColor, ( i - min ) / ( max - min ) );
+                            var color = minColor;
+
+                            data[ k * 4 ] = Math.round( color.r * 255 );
+                            data[ k * 4 + 1 ] = Math.round( color.g * 255 );
+                            data[ k * 4 + 2 ] = Math.round( color.b * 255 );
+                            data[ k * 4 + 3 ] = 255;
+
+                            k += 1;
+
+                        }
+
+                    }
+
+                }
+
+                ctx.putImageData( imageData, 0, 0 );
+
+                return canvas;
+
+            }
+        };
+
+        class App {
+            constructor() {
+                this.clock = new THREE.Clock();
+                var scene = new THREE.Scene();
+                scene.background = new THREE.Color(
+                    //0x050505
+                    0xffffff
+                );
+                this.scene = scene;
+                var uiScene = new THREE.Scene();
+                uiScene.background = new THREE.Color(0xffffff);
+                this.uiScene = uiScene;
+
+                var camera = new THREE.PerspectiveCamera(45, gAspect, 1, 10000);
+                camera.position.set(0, 0, -100);
+                this.camera = camera;
+                //scene.add(new THREE.CameraHelper(camera));
+
+                var uiCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 2);
+                uiCamera.position.set(0.8, 0, 1);
+                this.uiCamera = uiCamera;
+                this.lut = new THREE.Lut();
+                
+                var container = document.getElementById('app');
+                var renderer = new THREE.WebGLRenderer();
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(gWIDTH, gHEIGHT);
+                container.appendChild(renderer.domElement);
+                this.renderer = renderer;
+
+                var perspControl = new THREE.TrackballControls(camera, renderer.domElement);
+                perspControl.rotateSpeed = 2.0;
+                perspControl.zoomSpeed = 2;
+                perspControl.panSpeed = 2;
+                perspControl.noZoom = false;
+                perspControl.noPan = false;
+                perspControl.staticMoving = true;
+                perspControl.dynamicDampingFactor = 0.3;
+                perspControl.addEventListener('change', ()=>{
+                    console.log('perspective control change');
+                });
+                this.perspControl = perspControl;                
+
+                this.initObject();
+                this.resize();
+                this.render();
+            }
+            render() {
+                const {renderer, clock} = this;    
+                
+                renderer.setAnimationLoop(()=>{                    
+                    const delta = clock.getDelta();                                        
+                    this.update(delta);                    
+                });
+            }
+            update() {
+                const {scene, uiScene, renderer, 
+                    camera, uiCamera, perspControl } = this;
+                perspControl.update();
+                renderer.clear();
+                renderer.render(scene, camera);
+                renderer.render(uiScene, uiCamera);
+            }
+            initObject() {
+                const {scene, uiScene, lut} = this;
+
+                scene.add(new THREE.AxesHelper(2000));
+
+                scene.add(new THREE.AmbientLight(0x111111));
+                
+                var boxSize = 30,
+                    boxGeo = new THREE.BoxGeometry(boxSize, boxSize, boxSize),
+                    boxMat = new THREE.MeshBasicMaterial({color: 0x00ff00});
+                var box = new THREE.Mesh(boxGeo, boxMat);
+                box.position.set(0, 0, 0);
+                scene.add(box);
+
+                
+                let textW = 64, textH = 128,
+                    textGeo = new THREE.PlaneBufferGeometry(textW, textH);
+                let canvas = document.createElement('canvas'),
+                    ctx = canvas.getContext('2d');
+                canvas.width = textW;
+                canvas.height = textH;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.0)';
+                ctx.fillRect(0, 0, textW, textH);
+                ctx.fillStyle = 'black';
+                ctx.font = '6pt serif';
+                //ctx.textAlign = 'right';
+                ctx.fillText('0.0', 0, 5);
+                ctx.fillText('0.5', 0, textH/3.0);                
+                ctx.fillText('0.8', 0, textH/2.0);                
+                ctx.fillText('1.5', 0, textH);                
+                let text = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: new THREE.CanvasTexture( canvas ),
+                    transparent: true
+                }))
+                text.scale.x = 0.2;
+                uiScene.add(text);
+
+                let sprite = new THREE.Sprite( new THREE.SpriteMaterial( {
+                    map: new THREE.CanvasTexture( lut.createCanvas() ),
+                    transparent: true
+				} ) );
+                sprite.scale.x = 0.02;
+                uiScene.add( sprite );
+            }
+            resize() {
+                const {renderer, camera} = this;
+                window.addEventListener('resize', ()=>{
+                    gWIDTH = window.innerWidth;
+                    gHEIGHT = window.innerHeight;
+                    gAspect = gWIDTH / gHEIGHT;
+
+                    renderer.setSize(gWIDTH, gHEIGHT);
+
+                    camera.aspect = gAspect;
+                    camera.updateProjectionMatrix();
+                }, false);
+            }
+        }
+        
+        let app = new App();
+    </script>
+
+</body>
+
+</html>

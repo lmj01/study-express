@@ -1,0 +1,255 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+    <title>orthographic camera </title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style type="text/css">
+        body {
+            position: relative;
+            background: #000;
+            color: #999;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            font-family: georgia;
+            font-size: 1em;
+            text-align: center;
+        }
+        .panel {
+            position: fixed;
+            top: 50px;
+            left: 200px;
+            background-color: lightgray;
+        }        
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+    <div class="panel">
+        <button onclick="SwitchCamera();">switch camera</button>
+    </div>
+    <script src="/js/threejs/three.min.js"></script>
+    <script src="/js/threejs/OrbitControls.js"></script>
+    <script src="/js/threejs/TrackballControls.js"></script>
+    <script src="/js/threejs/OrthographicTrackballControls.js"></script>
+    <script>
+        var gWIDTH = window.innerWidth;
+        var gHEIGHT = window.innerHeight;
+        let gAspect = gWIDTH / gHEIGHT, target = new THREE.Vector3();
+        target.set(0, 0, 0);
+        let gSwitch = 0, gViewsize = 800;
+        class GridMesh extends THREE.LineSegments {
+            constructor(unit, size, divisions, color1, color2) {
+                super();
+
+                let _this = this,
+                    _center = divisions / 2,
+                    _step = size / divisions,
+                    _half = size / 2;
+                color1 = new THREE.Color(color1 !== undefined ? color1: 0x444444);
+                color2 = new THREE.Color(color2 !== undefined ? color2: 0x888888);
+
+                let _vertices = [],
+                    _colors = [];
+                for (let i=0, j=0, k=-_half; i <= divisions; i++, k+=_step) {
+                    if (unit == 100) {
+                        if (k % 10 !== 0) continue;
+                    } else if (unit == 10) {
+                        if (k % 2 !== 0) continue;
+                    }
+                    _vertices.push(-_half, 0, k, _half, 0, k);
+                    _vertices.push(k, 0, -_half, k, 0, _half);
+
+                    let color = unit == 1 ? (i % 10 == 0 ? color1 : color2) : (k % unit == 0 ? color1 : color2);
+                    color.toArray(_colors, j);j+=3;
+                    color.toArray(_colors, j);j+=3;
+                    color.toArray(_colors, j);j+=3;
+                    color.toArray(_colors, j);j+=3;
+                }
+
+                let geometry = new THREE.BufferGeometry();
+                geometry.addAttribute('position', new THREE.Float32BufferAttribute(_vertices, 3));
+                geometry.addAttribute('color', new THREE.Float32BufferAttribute(_colors, 3));
+
+                let material = new THREE.LineBasicMaterial({
+                    vertexColors: THREE.vertexColors,
+                    depthTest: false,
+                    transparent: true,
+                    opacity: 0.4,
+                    linewidth: 0.5
+                })
+                this.geometry = geometry;
+                this.material = material;
+            }
+        }
+        class App {
+            constructor() {
+                this.clock = new THREE.Clock();
+                var scene = new THREE.Scene();
+                scene.background = new THREE.Color(
+                    0x050505
+                    //0xffffff
+                );
+                this.scene = scene;
+
+                var cameraPersp = new THREE.PerspectiveCamera(45, gAspect, 1, 10000);
+                cameraPersp.position.set(0, 0, -100);
+                this.cameraPersp = cameraPersp;
+                scene.add(new THREE.CameraHelper(cameraPersp));
+
+                var cameraOrtho = new THREE.OrthographicCamera( 
+                        gViewsize * gAspect, -gViewsize * gAspect, 
+                        gViewsize, -gViewsize, 1, 10000 );        
+                cameraOrtho.position.set(0, 0, -100);
+                this.cameraOrtho = cameraOrtho;
+                scene.add(new THREE.CameraHelper(cameraOrtho));
+                
+                var container = document.getElementById('app');
+                var renderer = new THREE.WebGLRenderer();
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setSize(gWIDTH, gHEIGHT);
+                container.appendChild(renderer.domElement);
+                this.renderer = renderer;
+
+                var perspControl = new THREE.TrackballControls(cameraPersp, renderer.domElement);
+                perspControl.rotateSpeed = 2.0;
+                perspControl.zoomSpeed = 2;
+                perspControl.panSpeed = 2;
+                perspControl.noZoom = false;
+                perspControl.noPan = false;
+                perspControl.staticMoving = true;
+                perspControl.dynamicDampingFactor = 0.3;
+                perspControl.addEventListener('change', ()=>{
+                    console.log('perspective control change');
+                });
+                this.perspControl = perspControl;                
+
+                var orthoControl = new THREE.TrackballControls(cameraOrtho, renderer.domElement);
+                orthoControl.rotateSpeed = 2.0;
+                orthoControl.zoomSpeed = 2;
+                orthoControl.panSpeed = 2;
+                orthoControl.noZoom = false;
+                orthoControl.noPan = false;
+                //orthoControl.maxDistance = 750;
+                //orthoControl.minDistance = 45;
+                orthoControl.dynamicDampingFactor = 0.3;
+                orthoControl.addEventListener('change', ()=>{
+                    console.log('orthographic control change');
+                })
+                orthoControl.addEventListener('end', ()=>{
+                    console.log('orthographic control end');
+                    if (gSwitch % 2 == 1) {
+                        this.updateCamera();
+                    }                    
+                })
+                this.orthoControl = orthoControl;
+                
+                this.initObject();
+                this.resize();
+                this.render();
+            }
+            render() {
+                const {renderer, clock} = this;      
+                this.updateControl();          
+                renderer.setAnimationLoop(()=>{                    
+                    const delta = clock.getDelta();                                        
+                    this.update(delta);                    
+                });
+            }
+            update() {
+                const {scene, renderer, 
+                    cameraPersp, cameraOrtho, 
+                    orthoControl, perspControl,
+                    clock} = this;
+                if (gSwitch % 2 == 0) {
+                    console.log('perspect render');
+                    perspControl.update();
+                    renderer.clear();
+                    renderer.render(scene, cameraPersp);
+                } else {
+                    console.log('orthographic render');
+                    orthoControl.update();
+                    renderer.clear();        
+                    renderer.render(scene, cameraOrtho);
+                }                    
+            }
+            updateControl() {
+                const {perspControl, orthoControl} = this;
+                if (gSwitch % 2 == 0) {
+                    this.perspControl.enabled = true;
+                    this.orthoControl.enabled = false;
+                } else {
+                    this.perspControl.enabled = false;
+                    this.orthoControl.enabled = true;
+                }
+            }
+            updateCamera() {
+                const {renderer, cameraOrtho, orthoControl} = this;
+
+                let size = cameraOrtho.position.distanceTo(orthoControl.target),
+                    el = renderer.domElement,
+                    aspect = el.offsetWidth / el.offsetHeight;
+                cameraOrtho.left = size * aspect / -2;
+                cameraOrtho.right = size * aspect / 2;
+                cameraOrtho.top = size / 2;
+                cameraOrtho.bottom = size / -2;
+                cameraOrtho.updateProjectionMatrix();
+            }
+            initObject() {
+                const {scene} = this;
+
+                scene.add(new THREE.AxesHelper(2000));
+
+                scene.add(new THREE.AmbientLight(0x111111));
+                
+                var boxSize = 30,
+                    boxGeo = new THREE.BoxGeometry(boxSize, boxSize, boxSize),
+                    boxMat = new THREE.MeshBasicMaterial({color: 0x00ff00});
+                var box = new THREE.Mesh(boxGeo, boxMat);
+                box.position.set(0, 0, 0);
+                scene.add(box);
+
+                if (grid !== undefined) {
+                    scene.add(grid);
+                }                
+            }
+            resize() {
+                const {renderer, cameraPersp, cameraOrtho} = this;
+                window.addEventListener('resize', ()=>{
+                    gWIDTH = window.innerWidth;
+                    gHEIGHT = window.innerHeight;
+                    gAspect = gWIDTH / gHEIGHT;
+
+                    renderer.setSize(gWIDTH, gHEIGHT);
+
+                    
+                    if (gSwitch % 2 == 0) {
+                        cameraPersp.aspect = gAspect;
+                        cameraPersp.updateProjectionMatrix();
+                    } else {
+                        cameraOrtho.left = gViewsize * gAspect;
+                        cameraOrtho.right = -gViewsize * gAspect;
+                        cameraOrtho.top = gViewsize;
+                        cameraOrtho.bottom = -gViewsize;
+                        cameraOrtho.updateProjectionMatrix();
+                    }
+                }, false);
+            }
+        }
+        
+        let grid = new GridMesh(10, 1000, 1000, 0x111111);
+        let app = new App();
+
+        function SwitchCamera() {
+            gSwitch++;
+            app.updateControl();
+            console.log('switch camera ', gSwitch);
+        }
+    </script>
+
+</body>
+
+</html>

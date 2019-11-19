@@ -1,0 +1,63 @@
+<!DOCTYPE HTML>
+<html lang="en">
+
+<head>
+    <title>events</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style type="text/css">
+        body {
+            position: relative;
+            background: #000;
+            color: #999;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            font-family: georgia;
+            font-size: 1em;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>event system test</h1>
+    <script type="module">
+        import {
+            EventDispatcher
+            , Object3D
+        } from "/js/threejs/three.module.js"; 
+        class App extends EventDispatcher {
+            constructor() {
+                super();
+            }
+            toggle() {
+                this.dispatchEvent({type:'start', message:'start event message'});
+            }
+        }
+        class App2 extends Object3D {
+            constructor() {
+                super();
+            }
+            toggle() {
+                this.dispatchEvent({type:'start2', message:'start2 event message'});
+            }
+        }
+        let app = new App();
+        app.addEventListener('start', event=>{
+            alert(event.message);
+        })
+        app.toggle();
+
+        let app2 = new App2();
+        function handler(event) {
+            //alert(event.message);
+            console.log('app2', event.message);
+        }
+        app2.addEventListener('start2', handler);
+        let res = app2.hasEventListener('start2', handler);
+        console.log('app2', res);
+        app2.toggle();
+    </script>
+</body>
+</html>
