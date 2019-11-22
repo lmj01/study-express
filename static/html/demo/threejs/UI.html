@@ -43,16 +43,13 @@
         let gAspect = gWIDTH / gHEIGHT, target = new THREE.Vector3();
         target.set(0, 0, 0);
         let gSwitch = 0, tmpSwitch = 0;
-
         THREE.Lut = function ( colormap, numberofcolors ) {
-
             this.lut = [];
             this.setColorMap( colormap, numberofcolors );
             return this;
+        };
 
-            };
-
-            THREE.Lut.prototype = {
+        THREE.Lut.prototype = {
 
             constructor: THREE.Lut,
 
@@ -212,15 +209,16 @@
 
             }
         };
+        
+        let loader = new THREE.FontLoader();
         class Text {
-            constructor() {
-                loader.load('./fonts/helvetiker_regular.typeface.json', font=>{
-                    this.font = font;
-                });
+            constructor(font) {                
+                this.font = font;
             }
-            create(content, size, height) {
+            createText(content, size, height) {
+                const {font} = this;
                 var textGeo = new THREE.TextGeometry(content, {
-                    font: this.font,
+                    font: font,
                     size: size,
                     height: height,
                     curveSegments: 2,
@@ -237,23 +235,24 @@
                     new THREE.MeshBasicMaterial({color:0x00ff00})
                 ];
                 var mesh = new THREE.Mesh(textGeo, materials);					
-                let target = new THREE.Vector3();
-                textGeo.boundingBox.getCenter(target);
-                mesh.position.sub(target);				
-                var group = new THREE.Group();
-                group.add(mesh);
-                return group;					
+                // let target = new THREE.Vector3();
+                // textGeo.boundingBox.getCenter(target);
+                // mesh.position.sub(target);				
+                // var group = new THREE.Group();
+                // group.add(mesh);
+                // return group;					
+                return mesh;
             }
         }
-        let text2 = new Text();
         class App {
             constructor() {
                 this.clock = new THREE.Clock();
                 var scene = new THREE.Scene();
-                // scene.background = new THREE.Color(
-                //     //0x050505
-                //     0xffffff
-                // );
+                scene.background = new THREE.Color(
+                    0xccc
+                    //0x050505
+                    //0xffffff
+                );
                 this.scene = scene;
                 var uiScene = new THREE.Scene();
                 //uiScene.background = new THREE.Color(0xffffff);
@@ -321,77 +320,42 @@
                     boxMat = new THREE.MeshBasicMaterial({color: 0x00ff00});
                 var box = new THREE.Mesh(boxGeo, boxMat);
                 box.position.set(0, 0, 0);
-                //scene.add(box);
-
+                scene.add(box);
                 
-                // let textW = 64, textH = 128,
-                //     textGeo = new THREE.PlaneBufferGeometry(textW, textH);
-                // let canvas = document.createElement('canvas'),
-                //     ctx = canvas.getContext('2d');
-                // canvas.width = textW;
-                // canvas.height = textH;
-                // ctx.fillStyle = 'rgba(0, 0, 0, 0.0)';
-                // ctx.fillRect(0, 0, textW, textH);
-                // ctx.fillStyle = 'black';
-                // ctx.font = '6pt serif';
-                // //ctx.textAlign = 'right';
-                // ctx.fillText('0.0', 0, 5);
-                // ctx.fillText('0.5', 0, textH/3.0);                
-                // ctx.fillText('0.8', 0, textH/2.0);                
-                // ctx.fillText('1.5', 0, textH);                
-
-                // let text = new THREE.Sprite(new THREE.SpriteMaterial({
-                //     //map: new THREE.CanvasTexture( canvas ),
-                //     transparent: true
-                // }))
-                //text.scale.x = 0.2;
-                //uiScene.add(text);
-
-                var loader = new THREE.FontLoader();
                 loader.load('./fonts/helvetiker_regular.typeface.json', font=>{
-                    var textGeo = new THREE.TextGeometry('0.0', {
-                        font: font,
-                        size: 0.1,
-                        height: 0.01,
-                        curveSegments: 2,
-                        // bevelEnabled: true,
-                        // bevelThickness: 10,
-                        // bevelSize: 8,
-                        // bevelOffset: 0,
-                        // bevelSegments: 5
-                    });
-					textGeo.computeBoundingBox();
-					textGeo.computeVertexNormals();
-                    var materials = [
-                        new THREE.MeshBasicMaterial({color:0x000000}),
-                        new THREE.MeshBasicMaterial({color:0x00ff00})
-                    ];
-                    var text = new THREE.Mesh(textGeo, materials);					
-                    let target = new THREE.Vector3();
-                    textGeo.boundingBox.getCenter(target);
-                    text.position.sub(target);
-                    // uiScene.add(text);					
-					var group = new THREE.Group();
-                    group.add(text);					
-                    //group.rotation.z += Math.PI/4;
-                    //scene.add(group);
-					var planeGeo = new THREE.PlaneBufferGeometry(
-                        //0.03, 
-                        0.5,
+                    let textFactory = new Text(font);
+                    
+                    var planeGeo = new THREE.PlaneBufferGeometry(
+                        0.03, 
+                        //0.5,
                         1);
-					var planeMat = new THREE.MeshBasicMaterial({
-						color:0xf0ffff, 
-						side:THREE.DoubleSide,
-						//transparent: true						
+                    var planeMat = new THREE.MeshBasicMaterial({
+                        color:0xffffff, 
+                        side:THREE.DoubleSide,
+                        transparent: true						
                     });                                        
                     var plane = new THREE.Mesh(planeGeo, planeMat);
                     plane.position.set(-0.02, 0, 0);
-					plane.add(group);
+                    let txt1 = textFactory.createText('0.0', 0.02, 0.01);                     
+                    txt1.position.x = -0.03;
+                    txt1.position.y = 0.49;
+                    let txt2 = textFactory.createText('0.5', 0.02, 0.01);                     
+                    txt2.position.x = -0.03;
+                    txt2.position.y = 0.26;
+                    let txt3 = textFactory.createText('0.8', 0.02, 0.01);                     
+                    txt3.position.x = -0.03;
+                    txt3.position.y = -0.03;
+                    let txt4 = textFactory.createText('1.5', 0.02, 0.01);                     
+                    txt4.position.x = -0.03;
+                    txt4.position.y = -0.5;
+                    plane.add(txt1);
+                    plane.add(txt2);
+                    plane.add(txt3);
+                    plane.add(txt4);
                     uiScene.add(plane);
-                    //scene.add(plane);
-					
-                })
-				
+
+                });
+                
                 let sprite = new THREE.Sprite( new THREE.SpriteMaterial( {
                     map: new THREE.CanvasTexture( lut.createCanvas() ),
                     transparent: true
