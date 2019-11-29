@@ -248,11 +248,16 @@
             constructor() {
                 this.clock = new THREE.Clock();
                 var scene = new THREE.Scene();
-                scene.background = new THREE.Color(
-                    0xccc
-                    //0x050505
-                    //0xffffff
-                );
+                // scene.background = new THREE.Color(
+                //     //0xccc
+                //     //0x050505
+                //     0xffffff
+                // );
+                var bk = new THREE.TextureLoader().load('./3dbk.png');
+                bk.wrapS = bk.wrapT = THREE.RepeatWrapping;
+                scene.background = bk;                
+                var ambientLight = new THREE.AmbientLight("#FFFFFF", 0.3);//设置颜色 #FFFFFF f0f0b
+                scene.add(ambientLight);
                 this.scene = scene;
                 var uiScene = new THREE.Scene();
                 //uiScene.background = new THREE.Color(0xffffff);
@@ -269,10 +274,11 @@
                 this.lut = new THREE.Lut();
                 
                 var container = document.getElementById('app');
-                var renderer = new THREE.WebGLRenderer();
+                var renderer = new THREE.WebGLRenderer({alpha: true});
                 renderer.setPixelRatio(window.devicePixelRatio);
                 renderer.setSize(gWIDTH, gHEIGHT);
                 container.appendChild(renderer.domElement);
+                renderer.autoClear = false;
                 this.renderer = renderer;
 
                 var perspControl = new THREE.TrackballControls(camera, renderer.domElement);
@@ -326,16 +332,16 @@
                     let textFactory = new Text(font);
                     
                     var planeGeo = new THREE.PlaneBufferGeometry(
-                        0.03, 
-                        //0.5,
+                        0.05, 
                         1);
                     var planeMat = new THREE.MeshBasicMaterial({
-                        color:0xffffff, 
+                        //color:0xffffff, 
                         side:THREE.DoubleSide,
-                        transparent: true						
+                        transparent: true,
+                        opacity: 0						
                     });                                        
                     var plane = new THREE.Mesh(planeGeo, planeMat);
-                    plane.position.set(-0.02, 0, 0);
+                    plane.position.set(-0.04, 0, 0);
                     let txt1 = textFactory.createText('0.0', 0.02, 0.01);                     
                     txt1.position.x = -0.03;
                     txt1.position.y = 0.49;
